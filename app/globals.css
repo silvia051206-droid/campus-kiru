@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-kiru: #FAF9F6;
+    --card-kiru: #FFFFFF;
+    --border-kiru: #EAE7E1;
+    --text-kiru: #2D312E;
+    --muted-kiru: #737873;
+    --forest-kiru: #2D5A43;
+    --forest-light-kiru: #EAF2ED;
+  }
+
+  body {
+    background-color: var(--bg-kiru);
+    color: var(--text-kiru);
+  }
+}
+
+
+.bg-kiru-bg { background-color: var(--bg-kiru); }
+.bg-kiru-card { background-color: var(--card-kiru); }
+.border-kiru-border { border-color: var(--border-kiru); }
+.text-kiru-text { color: var(--text-kiru); }
+.text-kiru-muted { color: var(--muted-kiru); }
+.bg-kiru-forest { background-color: var(--forest-kiru); }
+.bg-kiru-forest-light { background-color: var(--forest-light-kiru); }
+.text-kiru-forest { color: var(--forest-kiru); }
+.border-kiru-forest { border-color: var(--forest-kiru); }
