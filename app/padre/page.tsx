@@ -7,16 +7,16 @@ import {
   Sparkles, 
   Clock, 
   BarChart3, 
-  Award, 
-  CheckCircle2, 
+  BookOpen, 
+  FileText, 
   Calendar,
-  Compass,
-  TrendingUp,
-  FileText
+  CheckCircle2,
+  ExternalLink
 } from "lucide-react";
 
 export default function PanelFamiliarPage() {
-  const [activeTab, setActiveTab] = useState<"resumen" | "actividad" | "estadisticas" | "objetivos">("resumen");
+  // Pestañas equivalentes al mentor sin "Asignar tarea" ni "Calcúlalo"
+  const [activeTab, setActiveTab] = useState<"inicio" | "estadisticas" | "mehmiro" | "informe">("inicio");
 
   const [studentData, setStudentData] = useState({
     name: "Carmen Fernández",
@@ -28,7 +28,7 @@ export default function PanelFamiliarPage() {
     mentorName: "Tutor Principal"
   });
 
-  // Sincronización de vinculación en caso de cambios
+  // Sincronización en caso de cambio de alumno vinculado
   useEffect(() => {
     const saved = localStorage.getItem("kiru_students_links");
     if (saved) {
@@ -69,10 +69,9 @@ export default function PanelFamiliarPage() {
       </header>
 
       <main className="max-w-5xl mx-auto p-6 space-y-6">
-        {/* Tarjeta Principal del Alumno Vinculado (Igual a las tarjetas del mentor) */}
+        {/* Tarjeta del alumno idéntica a la vista del Mentor */}
         <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            {/* Avatar visible a la izquierda */}
             <div className="w-16 h-16 rounded-2xl bg-kiru-forest-light border border-kiru-forest/20 flex items-center justify-center font-serif text-2xl text-kiru-forest font-bold shrink-0">
               {studentData.name.charAt(0)}
             </div>
@@ -89,37 +88,33 @@ export default function PanelFamiliarPage() {
             </div>
           </div>
 
-          {/* Marcador destacado de SkillCoins */}
-          <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-kiru-border pt-4 md:pt-0 md:pl-6">
-            <div className="bg-[#F7F6F3] p-4 rounded-2xl text-center border border-kiru-border min-w-[130px]">
+          <div className="grid grid-cols-3 gap-3 border-t md:border-t-0 md:border-l border-kiru-border pt-4 md:pt-0 md:pl-6">
+            <div className="bg-[#F7F6F3] p-3 rounded-2xl text-center border border-kiru-border">
               <p className="text-[10px] uppercase font-bold text-kiru-muted tracking-wider">SkillCoins</p>
-              <p className="font-serif text-3xl font-bold text-kiru-forest mt-0.5">{studentData.skillCoins}</p>
+              <p className="text-xl font-bold text-kiru-forest mt-0.5">{studentData.skillCoins}</p>
+            </div>
+            <div className="bg-[#F7F6F3] p-3 rounded-2xl text-center border border-kiru-border">
+              <p className="text-[10px] uppercase font-bold text-kiru-muted tracking-wider">Acierto</p>
+              <p className="text-xl font-bold text-kiru-forest mt-0.5">{studentData.accuracy}</p>
+            </div>
+            <div className="bg-[#F7F6F3] p-3 rounded-2xl text-center border border-kiru-border">
+              <p className="text-[10px] uppercase font-bold text-kiru-muted tracking-wider">Completadas</p>
+              <p className="text-xl font-bold text-kiru-forest mt-0.5">{studentData.tasksCompleted}</p>
             </div>
           </div>
         </div>
 
-        {/* Navegación Superior del Panel Familiar */}
+        {/* Navegación horizontal superior */}
         <nav className="flex flex-wrap gap-2 border-b border-kiru-border pb-3">
           <button
-            onClick={() => setActiveTab("resumen")}
+            onClick={() => setActiveTab("inicio")}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-              activeTab === "resumen"
+              activeTab === "inicio"
                 ? "bg-kiru-forest text-white shadow-sm"
                 : "bg-kiru-card border border-kiru-border text-kiru-muted hover:text-kiru-text"
             }`}
           >
-            <Compass className="w-3.5 h-3.5" /> Resumen General
-          </button>
-
-          <button
-            onClick={() => setActiveTab("actividad")}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-              activeTab === "actividad"
-                ? "bg-kiru-forest text-white shadow-sm"
-                : "bg-kiru-card border border-kiru-border text-kiru-muted hover:text-kiru-text"
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" /> Historial de Actividad
+            <Clock className="w-3.5 h-3.5" /> Inicio
           </button>
 
           <button
@@ -130,78 +125,69 @@ export default function PanelFamiliarPage() {
                 : "bg-kiru-card border border-kiru-border text-kiru-muted hover:text-kiru-text"
             }`}
           >
-            <BarChart3 className="w-3.5 h-3.5" /> Estadísticas Básicas
+            <BarChart3 className="w-3.5 h-3.5" /> Estadísticas
           </button>
 
           <button
-            onClick={() => setActiveTab("objetivos")}
+            onClick={() => setActiveTab("mehmiro")}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
-              activeTab === "objetivos"
+              activeTab === "mehmiro"
                 ? "bg-kiru-forest text-white shadow-sm"
                 : "bg-kiru-card border border-kiru-border text-kiru-muted hover:text-kiru-text"
             }`}
           >
-            <TrendingUp className="w-3.5 h-3.5" /> Fortalezas y Objetivos
+            <BookOpen className="w-3.5 h-3.5" /> Mehmiro
+          </button>
+
+          <button
+            onClick={() => setActiveTab("informe")}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              activeTab === "informe"
+                ? "bg-kiru-forest text-white shadow-sm"
+                : "bg-kiru-card border border-kiru-border text-kiru-muted hover:text-kiru-text"
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" /> Informe del Mentor
           </button>
         </nav>
 
-        {/* 1. SECCIÓN: RESUMEN GENERAL */}
-        {activeTab === "resumen" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-kiru-card p-5 rounded-3xl border border-kiru-border shadow-sm">
-                <p className="text-[10px] uppercase font-bold text-kiru-muted tracking-wider">Última conexión</p>
-                <p className="font-serif text-xl text-kiru-text font-bold mt-1">{studentData.lastAccess}</p>
-                <p className="text-[11px] text-kiru-muted mt-0.5">Acceso registrado en el campus</p>
-              </div>
-
-              <div className="bg-kiru-card p-5 rounded-3xl border border-kiru-border shadow-sm">
-                <p className="text-[10px] uppercase font-bold text-kiru-muted tracking-wider">Tareas completadas</p>
-                <p className="font-serif text-xl text-kiru-text font-bold mt-1">{studentData.tasksCompleted}</p>
-                <p className="text-[11px] text-kiru-muted mt-0.5">Módulos finalizados con éxito</p>
-              </div>
-
-              <div className="bg-kiru-card p-5 rounded-3xl border border-kiru-border shadow-sm">
-                <p className="text-[10px] uppercase font-bold text-kiru-muted tracking-wider">Precisión media</p>
-                <p className="font-serif text-xl text-kiru-forest font-bold mt-1">{studentData.accuracy}</p>
-                <p className="text-[11px] text-kiru-muted mt-0.5">Porcentaje de respuestas correctas</p>
-              </div>
-            </div>
-
-            <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-3">
-              <h3 className="font-serif text-lg text-kiru-text">Nota del Mentor</h3>
-              <p className="text-xs text-kiru-muted leading-relaxed">
-                Carmen mantiene un ritmo constante y motivado. Ha superado con éxito las actividades de vocabulario y tiempos verbales asignadas esta semana, sumando nuevas SkillCoins para su progreso de nivel.
+        {/* 1. SECCIÓN: INICIO (HISTORIAL / AGENDA CRONOLÓGICA) */}
+        {activeTab === "inicio" && (
+          <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-6">
+            <div>
+              <h3 className="font-serif text-lg text-kiru-text">Historial de actividad reciente</h3>
+              <p className="text-xs text-kiru-muted mt-0.5">
+                Agenda cronológica de los accesos y actividades realizadas por {studentData.name}.
               </p>
             </div>
-          </div>
-        )}
 
-        {/* 2. SECCIÓN: HISTORIAL DE ACTIVIDAD */}
-        {activeTab === "actividad" && (
-          <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-5">
-            <div>
-              <h3 className="font-serif text-lg text-kiru-text">Actividad reciente de Carmen</h3>
-              <p className="text-xs text-kiru-muted mt-0.5">Registro cronológico de ejercicios y retos completados.</p>
-            </div>
-
-            <div className="relative pl-6 space-y-5 before:content-[''] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-kiru-border">
+            <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-[2px] before:bg-kiru-border">
               <div className="relative">
                 <div className="absolute -left-[27px] top-1 w-3 h-3 rounded-full bg-kiru-forest ring-4 ring-kiru-card" />
-                <div className="bg-[#F7F6F3] p-4 rounded-2xl border border-kiru-border">
+                <div className="bg-[#F7F6F3] p-4 rounded-2xl border border-kiru-border space-y-1">
                   <span className="text-[11px] font-bold text-kiru-forest">Hoy 11:58</span>
-                  <p className="text-xs text-kiru-text font-medium mt-0.5">
-                    Ha completado la actividad <strong>“Vocabulary — Unit 1”</strong> con un resultado de <strong>8/10</strong> (+5 SkillCoins).
+                  <p className="text-xs text-kiru-text font-medium">
+                    Ha terminado la actividad con <strong>8/10</strong> (+5 SkillCoins).
                   </p>
                 </div>
               </div>
 
               <div className="relative">
                 <div className="absolute -left-[27px] top-1 w-3 h-3 rounded-full bg-kiru-muted ring-4 ring-kiru-card" />
-                <div className="bg-[#F7F6F3] p-4 rounded-2xl border border-kiru-border">
+                <div className="bg-[#F7F6F3] p-4 rounded-2xl border border-kiru-border space-y-1">
+                  <span className="text-[11px] font-bold text-kiru-muted">Hoy 11:52</span>
+                  <p className="text-xs text-kiru-text font-medium">
+                    Ha realizado la actividad <strong>“Vocabulary — Unit 1”</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute -left-[27px] top-1 w-3 h-3 rounded-full bg-kiru-muted ring-4 ring-kiru-card" />
+                <div className="bg-[#F7F6F3] p-4 rounded-2xl border border-kiru-border space-y-1">
                   <span className="text-[11px] font-bold text-kiru-muted">Hoy 11:50</span>
-                  <p className="text-xs text-kiru-text font-medium mt-0.5">
-                    Carmen ha iniciado sesión en el Campus Virtual.
+                  <p className="text-xs text-kiru-text font-medium">
+                    El alumno ha accedido al campus virtual.
                   </p>
                 </div>
               </div>
@@ -209,75 +195,131 @@ export default function PanelFamiliarPage() {
           </div>
         )}
 
-        {/* 3. SECCIÓN: ESTADÍSTICAS BÁSICAS */}
+        {/* 2. SECCIÓN: ESTADÍSTICAS */}
         {activeTab === "estadisticas" && (
-          <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-5">
-            <div>
-              <h3 className="font-serif text-lg text-kiru-text">Evolución y Áreas de Trabajo</h3>
-              <p className="text-xs text-kiru-muted mt-0.5">Progreso en las principales materias de acompañamiento.</p>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-kiru-card p-5 rounded-3xl border border-kiru-border shadow-sm">
+                <p className="text-[11px] font-bold text-kiru-muted uppercase tracking-wider">Progreso global</p>
+                <p className="font-serif text-3xl text-kiru-forest font-bold mt-1">74%</p>
+                <p className="text-[11px] text-kiru-muted mt-1">Nivel: {studentData.level}</p>
+              </div>
+
+              <div className="bg-kiru-card p-5 rounded-3xl border border-kiru-border shadow-sm">
+                <p className="text-[11px] font-bold text-kiru-muted uppercase tracking-wider">Actividades realizadas</p>
+                <p className="font-serif text-3xl text-kiru-forest font-bold mt-1">{studentData.tasksCompleted}</p>
+                <p className="text-[11px] text-kiru-muted mt-1">Completadas con éxito</p>
+              </div>
+
+              <div className="bg-kiru-card p-5 rounded-3xl border border-kiru-border shadow-sm">
+                <p className="text-[11px] font-bold text-kiru-muted uppercase tracking-wider">Precisión</p>
+                <p className="font-serif text-3xl text-kiru-forest font-bold mt-1">{studentData.accuracy}</p>
+                <p className="text-[11px] text-kiru-muted mt-1">Media de respuestas acertadas</p>
+              </div>
+
+              <div className="bg-kiru-card p-5 rounded-3xl border border-kiru-border shadow-sm">
+                <p className="text-[11px] font-bold text-kiru-muted uppercase tracking-wider">SkillCoins</p>
+                <p className="font-serif text-3xl text-kiru-forest font-bold mt-1">{studentData.skillCoins}</p>
+                <p className="text-[11px] text-kiru-muted mt-1">Saldo acumulado</p>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span>Inglés (Gateway A1/A2)</span>
-                  <span className="text-kiru-forest font-bold">85%</span>
+            <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-4">
+              <h3 className="font-serif text-lg text-kiru-text">Evolución en materias</h3>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span>Inglés (Gateway)</span>
+                    <span className="text-kiru-forest font-bold">85%</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-[#F7F6F3]">
+                    <div className="h-full rounded-full bg-kiru-forest" style={{ width: "85%" }} />
+                  </div>
                 </div>
-                <div className="w-full h-2 rounded-full bg-[#F7F6F3]">
-                  <div className="h-full rounded-full bg-kiru-forest" style={{ width: "85%" }} />
-                </div>
-              </div>
 
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span>Cálculo mental (Calcúlalo)</span>
-                  <span className="text-kiru-forest font-bold">90%</span>
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span>Cálculo y agilidad mental</span>
+                    <span className="text-kiru-forest font-bold">90%</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-[#F7F6F3]">
+                    <div className="h-full rounded-full bg-kiru-forest" style={{ width: "90%" }} />
+                  </div>
                 </div>
-                <div className="w-full h-2 rounded-full bg-[#F7F6F3]">
-                  <div className="h-full rounded-full bg-kiru-forest" style={{ width: "90%" }} />
-                </div>
-              </div>
 
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span>Comprensión lectora (Mehmiro)</span>
-                  <span className="text-kiru-forest font-bold">70%</span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-[#F7F6F3]">
-                  <div className="h-full rounded-full bg-kiru-forest" style={{ width: "70%" }} />
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span>Comprensión lectora</span>
+                    <span className="text-kiru-forest font-bold">70%</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-[#F7F6F3]">
+                    <div className="h-full rounded-full bg-kiru-forest" style={{ width: "70%" }} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* 4. SECCIÓN: FORTALEZAS Y OBJETIVOS (Base para la telaraña de objetivos futuros) */}
-        {activeTab === "objetivos" && (
-          <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-4">
-            <div>
-              <h3 className="font-serif text-lg text-kiru-text">Fortalezas y Objetivos</h3>
-              <p className="text-xs text-kiru-muted mt-0.5">
-                Estructura preparada para la matriz de fortalezas y debilidades (hábitos, matemáticas y lengua).
+        {/* 3. SECCIÓN: MEHMIRO */}
+        {activeTab === "mehmiro" && (
+          <div className="bg-kiru-card rounded-3xl p-8 border border-kiru-border shadow-sm max-w-xl mx-auto space-y-6">
+            <div className="text-center space-y-1">
+              <p className="text-xs font-bold tracking-widest text-kiru-forest uppercase">MEHMIRO</p>
+              <h2 className="font-serif text-2xl text-kiru-text">MeMiro</h2>
+              <p className="text-xs text-kiru-muted">Lectura comprensiva y velocidad lectora</p>
+            </div>
+
+            <div className="bg-[#F7F6F3] p-5 rounded-2xl border border-kiru-border space-y-2">
+              <h4 className="font-serif text-base text-kiru-text">Seguimiento familiar</h4>
+              <p className="text-xs text-kiru-muted leading-relaxed">
+                Supervisa los libros, relatos interactivos y avances de fluidez lectora que Carmen realiza semanalmente.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-4 bg-[#F7F6F3] rounded-2xl border border-kiru-border space-y-1">
-                <p className="text-[11px] font-bold text-kiru-forest uppercase tracking-wider">Hábitos y Organización</p>
-                <p className="text-xs text-kiru-text font-semibold">Excelente constancia</p>
-                <p className="text-[11px] text-kiru-muted">Realiza las actividades en los tiempos previstos.</p>
+            <div className="text-center pt-2">
+              <a
+                href="https://memiro.es"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-2xl bg-kiru-forest text-white text-sm font-semibold hover:bg-kiru-forest-hover transition-colors shadow-sm"
+              >
+                Acceder a MeMiro <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* 4. SECCIÓN: INFORME DEL MENTOR */}
+        {activeTab === "informe" && (
+          <div className="bg-kiru-card rounded-3xl p-8 border border-kiru-border shadow-sm max-w-2xl mx-auto space-y-6">
+            <div className="flex items-center justify-between border-b border-kiru-border pb-4">
+              <div>
+                <h3 className="font-serif text-xl text-kiru-text">Informe de Acompañamiento</h3>
+                <p className="text-xs text-kiru-muted">Alumno: {studentData.name} · Tutor: {studentData.mentorName}</p>
+              </div>
+              <span className="px-3 py-1 bg-kiru-forest-light text-kiru-forest font-semibold rounded-full text-xs">
+                Sprint 1
+              </span>
+            </div>
+
+            <div className="space-y-4 text-xs text-kiru-text">
+              <div className="p-4 bg-[#F7F6F3] rounded-2xl border border-kiru-border space-y-2">
+                <p className="font-bold text-kiru-forest uppercase tracking-wider text-[11px]">Observaciones del Mentor</p>
+                <p className="leading-relaxed text-kiru-muted">
+                  Carmen mantiene un excelente compromiso y regularidad. Ha afianzado el vocabulario básico y las estructuras del tiempo verbal presente, alcanzando una precisión del 92%.
+                </p>
               </div>
 
-              <div className="p-4 bg-[#F7F6F3] rounded-2xl border border-kiru-border space-y-1">
-                <p className="text-[11px] font-bold text-kiru-forest uppercase tracking-wider">Matemáticas y Cálculo</p>
-                <p className="text-xs text-kiru-text font-semibold">Alta velocidad de cálculo</p>
-                <p className="text-[11px] text-kiru-muted">Destaca en rapidez y precisión mental.</p>
-              </div>
-
-              <div className="p-4 bg-[#F7F6F3] rounded-2xl border border-kiru-border space-y-1">
-                <p className="text-[11px] font-bold text-kiru-forest uppercase tracking-wider">Lengua e Idiomas</p>
-                <p className="text-xs text-kiru-text font-semibold">En progreso</p>
-                <p className="text-[11px] text-kiru-muted">Reforzando lectura crítica y vocabulario.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-[#F7F6F3] rounded-2xl border border-kiru-border">
+                  <p className="text-kiru-muted font-medium">Nivel actual</p>
+                  <p className="text-sm font-bold text-kiru-text mt-0.5">{studentData.level} ({studentData.skillCoins} SC)</p>
+                </div>
+                <div className="p-3 bg-[#F7F6F3] rounded-2xl border border-kiru-border">
+                  <p className="text-kiru-muted font-medium">Próximo objetivo</p>
+                  <p className="text-sm font-bold text-kiru-text mt-0.5">Unit 3: Past Continuous</p>
+                </div>
               </div>
             </div>
           </div>
