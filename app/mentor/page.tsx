@@ -9,25 +9,47 @@ interface Student {
   lastAccess: string;
   skillCoins: number;
   avatarText: string;
+  linkedParent?: string;
 }
 
-const mockStudents: Student[] = [
+const initialStudents: Student[] = [
   {
     id: '1',
     name: 'Carmen Fernández',
     level: 'Explorador',
     lastAccess: 'Hoy 11:50',
     skillCoins: 19,
-    avatarText: 'CF'
+    avatarText: 'CF',
+    linkedParent: 'familia'
   }
 ];
 
 export default function MentorPage() {
+  const [students, setStudents] = useState<Student[]>(initialStudents);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [activeTab, setActiveTab] = useState<
     'inicio' | 'estadisticas' | 'asignar' | 'calculalo' | 'memiro' | 'informe'
   >('inicio');
 
+  // Estado para la vinculación de padres
+  const [parentUsername, setParentUsername] = useState('');
+  const [linkSuccess, setLinkSuccess] = useState(false);
+
+  const handleLinkParent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudent || !parentUsername) return;
+
+    setStudents(prev =>
+      prev.map(s =>
+        s.id === selectedStudent.id ? { ...s, linkedParent: parentUsername } : s
+      )
+    );
+    setSelectedStudent(prev => prev ? { ...prev, linkedParent: parentUsername } : null);
+    setLinkSuccess(true);
+    setTimeout(() => setLinkSuccess(false), 3000);
+  };
+
+  // VISTA 1: LISTADO DE ALUMNOS (PANEL PRINCIPAL DEL MENTOR)
   if (!selectedStudent) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-8">
@@ -37,17 +59,21 @@ export default function MentorPage() {
               Panel del Mentor
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Selecciona un alumno para revisar su historial y gestionar sus actividades.
+              Selecciona un alumno para revisar su historial, vincular a su familia o gestionar sus actividades.
             </p>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {mockStudents.map((student) => (
+            {students.map((student) => (
               <div
                 key={student.id}
-                onClick={() => setSelectedStudent(student)}
+                onClick={() => {
+                  setSelectedStudent(student);
+                  setParentUsername(student.linkedParent || '');
+                }}
                 className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer flex items-center gap-5"
               >
+                {/* Avatar a la izquierda */}
                 <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-lg font-bold text-slate-600 shrink-0">
                   {student.avatarText}
                 </div>
@@ -60,6 +86,11 @@ export default function MentorPage() {
                     <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
                       Nivel: {student.level}
                     </span>
+                    {student.linkedParent && (
+                      <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">
+                        Familia: @{student.linkedParent}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-slate-400 mt-2">
                     Último acceso: <span className="text-slate-600 font-medium">{student.lastAccess}</span>
@@ -73,9 +104,12 @@ export default function MentorPage() {
     );
   }
 
+  // VISTA 2: PERFIL INDIVIDUAL CON NAVEGACIÓN SUPERIOR HORIZONTAL
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-8">
       <div className="max-w-5xl mx-auto">
+        
+        {/* Cabecera del alumno seleccionado */}
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setSelectedStudent(null)}
@@ -91,7 +125,7 @@ export default function MentorPage() {
           </div>
         </div>
 
-        {/* NAVEGACIÓN SUPERIOR HORIZONTAL */}
+        {/* NAVEGACIÓN SUPERIOR EXACTA SPRINT 1 */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-6 p-2">
           <nav className="flex flex-wrap gap-2">
             {[
@@ -117,45 +151,81 @@ export default function MentorPage() {
           </nav>
         </div>
 
-        {/* CONTENIDO SEGÚN PESTAÑA */}
+        {/* CONTENIDO SEGÚN LA PESTAÑA SELECCIONADA */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
+          
+          {/* 1. INICIO: Historial cronológico + Vinculación Familiar */}
           {activeTab === 'inicio' && (
-            <div>
-              <h2 className="text-2xl font-serif text-slate-900 mb-2">
-                Historial de Actividad
-              </h2>
-              <p className="text-xs text-slate-400 mb-6">
-                Registro cronológico de la interacción del alumno con el campus.
-              </p>
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-2xl font-serif text-slate-900 mb-2">
+                  Historial de Actividad
+                </h2>
+                <p className="text-xs text-slate-400 mb-6">
+                  Registro cronológico de la interacción del alumno con el campus.
+                </p>
 
-              <div className="space-y-4 border-l-2 border-slate-100 ml-3 pl-5">
-                <div className="relative">
-                  <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                  <p className="text-xs font-bold text-slate-400">Hoy 11:58</p>
-                  <p className="text-sm font-medium text-slate-800 mt-0.5">
-                    Ha terminado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span> con una puntuación de 8/10.
-                  </p>
-                </div>
+                <div className="space-y-4 border-l-2 border-slate-100 ml-3 pl-5">
+                  <div className="relative">
+                    <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
+                    <p className="text-xs font-bold text-slate-400">Hoy 11:58</p>
+                    <p className="text-sm font-medium text-slate-800 mt-0.5">
+                      Ha terminado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span> con una puntuación de 8/10.
+                    </p>
+                  </div>
 
-                <div className="relative">
-                  <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                  <p className="text-xs font-bold text-slate-400">Hoy 11:52</p>
-                  <p className="text-sm font-medium text-slate-800 mt-0.5">
-                    Ha realizado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span>.
-                  </p>
-                </div>
+                  <div className="relative">
+                    <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
+                    <p className="text-xs font-bold text-slate-400">Hoy 11:52</p>
+                    <p className="text-sm font-medium text-slate-800 mt-0.5">
+                      Ha realizado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span>.
+                    </p>
+                  </div>
 
-                <div className="relative">
-                  <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                  <p className="text-xs font-bold text-slate-400">Hoy 11:50</p>
-                  <p className="text-sm font-medium text-slate-800 mt-0.5">
-                    El alumno ha accedido al campus.
-                  </p>
+                  <div className="relative">
+                    <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
+                    <p className="text-xs font-bold text-slate-400">Hoy 11:50</p>
+                    <p className="text-sm font-medium text-slate-800 mt-0.5">
+                      El alumno ha accedido al campus.
+                    </p>
+                  </div>
                 </div>
+              </div>
+
+              {/* BLOQUE PARA VINCULAR PADRE / FAMILIA */}
+              <div className="pt-6 border-t border-slate-100">
+                <h3 className="text-base font-serif text-slate-900 mb-1">
+                  Vincular Familia / Padre / Madre
+                </h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Asigna la cuenta de la familia que tendrá acceso al seguimiento del alumno.
+                </p>
+                <form onSubmit={handleLinkParent} className="flex gap-3 max-w-md">
+                  <input
+                    type="text"
+                    value={parentUsername}
+                    onChange={(e) => setParentUsername(e.target.value)}
+                    placeholder="Usuario de la familia (ej: familia)"
+                    className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+                  >
+                    Vincular
+                  </button>
+                </form>
+                {linkSuccess && (
+                  <p className="text-xs text-emerald-600 font-semibold mt-2">
+                    Cuenta familiar vinculada correctamente.
+                  </p>
+                )}
               </div>
             </div>
           )}
 
+          {/* 2. ESTADÍSTICAS */}
           {activeTab === 'estadisticas' && (
             <div>
               <h2 className="text-2xl font-serif text-slate-900 mb-2">
@@ -188,6 +258,7 @@ export default function MentorPage() {
             </div>
           )}
 
+          {/* 3. ASIGNAR TAREA */}
           {activeTab === 'asignar' && (
             <div>
               <h2 className="text-2xl font-serif text-slate-900 mb-2">
@@ -279,6 +350,7 @@ export default function MentorPage() {
             </div>
           )}
 
+          {/* 4. CALCÚLALO */}
           {activeTab === 'calculalo' && (
             <div>
               <h2 className="text-2xl font-serif text-slate-900 mb-2">
@@ -308,6 +380,7 @@ export default function MentorPage() {
             </div>
           )}
 
+          {/* 5. MEMIRO */}
           {activeTab === 'memiro' && (
             <div>
               <h2 className="text-2xl font-serif text-slate-900 mb-2">
@@ -337,6 +410,7 @@ export default function MentorPage() {
             </div>
           )}
 
+          {/* 6. ASIGNAR INFORME */}
           {activeTab === 'informe' && (
             <div>
               <h2 className="text-2xl font-serif text-slate-900 mb-2">
@@ -353,6 +427,7 @@ export default function MentorPage() {
               </div>
             </div>
           )}
+
         </div>
       </div>
     </div>
