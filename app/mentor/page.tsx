@@ -44,7 +44,7 @@ export default function MentorPage() {
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [activeTab, setActiveTab] = useState<
-    'inicio' | 'estadisticas' | 'asignar' | 'calculalo' | 'memiro' | 'informe'
+    'inicio' | 'estadisticas' | 'asignar' | 'calculalo' | 'mehmiro' | 'informe'
   >('inicio');
 
   const [parentUsername, setParentUsername] = useState('');
@@ -174,7 +174,7 @@ export default function MentorPage() {
                   { id: 'estadisticas', label: 'Estadísticas' },
                   { id: 'asignar', label: 'Asignar tarea' },
                   { id: 'calculalo', label: 'Calcúlalo' },
-                  { id: 'memiro', label: 'MeMiro' },
+                  { id: 'mehmiro', label: 'Mehmiro' },
                   { id: 'informe', label: 'Asignar informe' },
                 ].map((tab) => (
                   <button
@@ -329,13 +329,14 @@ export default function MentorPage() {
                 </div>
               )}
 
-              {activeTab === 'memiro' && (
+              {/* PESTAÑA MEHMIRO CON H */}
+              {activeTab === 'mehmiro' && (
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">MeMiro</h2>
+                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Mehmiro</h2>
                   <div className="bg-[#FDFBF7] p-5 sm:p-6 rounded-2xl border border-slate-100 mb-6">
                     <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones:</h3>
                     <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
-                      <li>Haz clic en «Acceder a MeMiro».</li>
+                      <li>Haz clic en «Acceder a Mehmiro».</li>
                       <li>Inicia sesión con tu cuenta de tutor/mentor.</li>
                     </ol>
                   </div>
@@ -345,7 +346,7 @@ export default function MentorPage() {
                     rel="noopener noreferrer"
                     className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
                   >
-                    Acceder a MeMiro
+                    Acceder a Mehmiro
                   </a>
                 </div>
               )}
