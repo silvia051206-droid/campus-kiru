@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 
 export default function PanelFamiliarPage() {
-  // Pestañas equivalentes al mentor sin "Asignar tarea" ni "Calcúlalo"
   const [activeTab, setActiveTab] = useState<"inicio" | "estadisticas" | "mehmiro" | "informe">("inicio");
 
   const [studentData, setStudentData] = useState({
@@ -28,7 +27,6 @@ export default function PanelFamiliarPage() {
     mentorName: "Tutor Principal"
   });
 
-  // Sincronización en caso de cambio de alumno vinculado
   useEffect(() => {
     const saved = localStorage.getItem("kiru_students_links");
     if (saved) {
@@ -52,7 +50,7 @@ export default function PanelFamiliarPage() {
 
   return (
     <div className="min-h-screen bg-kiru-bg pb-16">
-      {/* Cabecera del Panel Familiar con botón cerrar sesión en rojo */}
+      {/* Cabecera del Panel Familiar */}
       <header className="bg-kiru-card border-b border-kiru-border px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div>
           <h1 className="font-serif text-2xl text-kiru-text">Panel Familiar</h1>
@@ -72,7 +70,7 @@ export default function PanelFamiliarPage() {
       </header>
 
       <main className="max-w-5xl mx-auto p-6 space-y-6">
-        {/* Tarjeta del alumno idéntica a la vista del Mentor */}
+        {/* Tarjeta del alumno */}
         <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-kiru-forest-light border border-kiru-forest/20 flex items-center justify-center font-serif text-2xl text-kiru-forest font-bold shrink-0">
@@ -293,20 +291,15 @@ export default function PanelFamiliarPage() {
           </div>
         )}
 
-        {/* 4. SECCIÓN: INFORME DEL MENTOR (DEJADA EN BLANCO SEGÚN REQUERIMIENTOS) */}
+        {/* 4. SECCIÓN: INFORME DEL MENTOR (EN BLANCO Y SIN ETIQUETA SPRINT 1) */}
         {activeTab === "informe" && (
           <div className="bg-kiru-card rounded-3xl p-8 border border-kiru-border shadow-sm max-w-2xl mx-auto space-y-6">
-            <div className="flex items-center justify-between border-b border-kiru-border pb-4">
-              <div>
-                <h3 className="font-serif text-xl text-kiru-text">Informe de Acompañamiento</h3>
-                <p className="text-xs text-kiru-muted">Alumno: {studentData.name} · Tutor: {studentData.mentorName}</p>
-              </div>
-              <span className="px-3 py-1 bg-kiru-forest-light text-kiru-forest font-semibold rounded-full text-xs">
-                Sprint 1
-              </span>
+            <div className="border-b border-kiru-border pb-4">
+              <h3 className="font-serif text-xl text-kiru-text">Informe de Acompañamiento</h3>
+              <p className="text-xs text-kiru-muted">Alumno: {studentData.name} · Tutor: {studentData.mentorName}</p>
             </div>
 
-            {/* Espacio en blanco reservado para el sistema de informes */}
+            {/* Espacio en blanco reservado para el informe */}
             <div className="min-h-[160px]" />
           </div>
         )}
