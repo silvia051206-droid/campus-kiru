@@ -17,20 +17,24 @@ export default function TareasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-6 md:p-10">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans px-4 sm:px-6 md:px-10 py-6 md:py-10">
       <div className="max-w-4xl mx-auto">
         
-        {/* Cabecera con cierre de sesión en rojo */}
+        {/* Cabecera con botón de apagado en negro */}
         <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
           <div>
-            <h1 className="text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
+            <h1 className="text-xl sm:text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
             <span className="text-xs text-slate-500 font-medium">Panel del Alumno</span>
           </div>
           <button
             onClick={() => router.push('/')}
-            className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
+            title="Cerrar sesión"
+            className="p-2 sm:p-2.5 rounded-xl border border-slate-900 bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center shadow-sm"
           >
-            Cerrar sesión
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+              <line x1="12" y1="2" x2="12" y2="12" />
+            </svg>
           </button>
         </div>
 
@@ -54,16 +58,16 @@ export default function TareasPage() {
         </div>
 
         {/* Pantalla de tareas y actividad interactiva */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sm:p-8">
           {!inActivity ? (
             <div>
-              <h2 className="text-2xl font-serif text-[#0F172A] mb-6">Tareas Asignadas</h2>
-              <div className="p-6 border border-slate-100 rounded-2xl bg-[#FDFBF7] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h2 className="text-xl sm:text-2xl font-serif text-[#0F172A] mb-6">Tareas Asignadas</h2>
+              <div className="p-5 sm:p-6 border border-slate-100 rounded-2xl bg-[#FDFBF7] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     INGLÉS
                   </span>
-                  <h3 className="text-xl font-serif text-slate-900 mt-1">
+                  <h3 className="text-lg sm:text-xl font-serif text-slate-900 mt-1">
                     Unit 1 · Vocabulary
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
@@ -89,7 +93,7 @@ export default function TareasPage() {
                 </span>
               </div>
 
-              <h3 className="text-lg font-serif text-slate-900 mb-6">
+              <h3 className="text-base sm:text-lg font-serif text-slate-900 mb-6">
                 Choose the correct answer:
               </h3>
 
@@ -121,7 +125,7 @@ export default function TareasPage() {
             </div>
           ) : (
             <div className="text-center py-6">
-              <h3 className="text-2xl font-serif text-slate-900 mb-2">
+              <h3 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">
                 Resultado de la actividad
               </h3>
               <p className="text-sm text-slate-600 mb-6">

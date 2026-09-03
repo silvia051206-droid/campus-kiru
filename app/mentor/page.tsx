@@ -36,10 +36,6 @@ export default function MentorPage() {
   const [parentUsername, setParentUsername] = useState('');
   const [linkSuccess, setLinkSuccess] = useState(false);
 
-  const handleLogout = () => {
-    router.push('/');
-  };
-
   const handleLinkParent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !parentUsername) return;
@@ -55,20 +51,24 @@ export default function MentorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-8">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans px-4 sm:px-6 md:px-10 py-6 md:py-10">
       <div className="max-w-5xl mx-auto">
         
-        {/* BARRA SUPERIOR CON CIERRE DE SESIÓN EN ROJO */}
+        {/* Cabecera con botón de apagado en negro */}
         <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
           <div>
-            <h1 className="text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
+            <h1 className="text-xl sm:text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
             <span className="text-xs text-slate-500 font-medium">Panel del Mentor</span>
           </div>
           <button
-            onClick={handleLogout}
-            className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
+            onClick={() => router.push('/')}
+            title="Cerrar sesión"
+            className="p-2 sm:p-2.5 rounded-xl border border-slate-900 bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center shadow-sm"
           >
-            Cerrar sesión
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+              <line x1="12" y1="2" x2="12" y2="12" />
+            </svg>
           </button>
         </div>
 
@@ -76,8 +76,8 @@ export default function MentorPage() {
         {!selectedStudent ? (
           <div>
             <div className="mb-6">
-              <h2 className="text-3xl font-serif text-[#0F172A]">Alumnos asignados</h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <h2 className="text-2xl sm:text-3xl font-serif text-[#0F172A]">Alumnos asignados</h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
                 Selecciona un alumno para revisar su historial o gestionar actividades.
               </p>
             </div>
@@ -90,14 +90,14 @@ export default function MentorPage() {
                     setSelectedStudent(student);
                     setParentUsername(student.linkedParent || '');
                   }}
-                  className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer flex items-center gap-5"
+                  className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer flex items-center gap-4 sm:gap-5"
                 >
-                  <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-lg font-bold text-slate-600 shrink-0">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-base sm:text-lg font-bold text-slate-600 shrink-0">
                     {student.avatarText}
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="text-xl font-serif text-slate-900">
+                    <h3 className="text-lg sm:text-xl font-serif text-slate-900">
                       {student.name}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
@@ -124,19 +124,19 @@ export default function MentorPage() {
             <div className="flex items-center justify-between mb-6">
               <button
                 onClick={() => setSelectedStudent(null)}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-900 border border-slate-200 bg-white px-3 py-1.5 rounded-lg transition"
+                className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
               >
                 ← Volver a lista de alumnos
               </button>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-slate-500">Alumno:</span>
-                <span className="text-lg font-serif text-slate-900">
+                <span className="text-base sm:text-lg font-serif text-slate-900">
                   {selectedStudent.name}
                 </span>
               </div>
             </div>
 
-            {/* NAVEGACIÓN SUPERIOR HORIZONTAL */}
+            {/* NAVEGACIÓN SUPERIOR */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-6 p-2">
               <nav className="flex flex-wrap gap-2">
                 {[
@@ -150,7 +150,7 @@ export default function MentorPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition ${
+                    className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-semibold transition ${
                       activeTab === tab.id
                         ? 'bg-slate-900 text-white shadow-sm'
                         : 'text-slate-600 hover:bg-slate-50'
@@ -162,11 +162,11 @@ export default function MentorPage() {
               </nav>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-8">
               {activeTab === 'inicio' && (
                 <div className="space-y-8">
                   <div>
-                    <h2 className="text-2xl font-serif text-slate-900 mb-2">Historial de Actividad</h2>
+                    <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Historial de Actividad</h2>
                     <p className="text-xs text-slate-400 mb-6">Registro cronológico de la interacción del alumno con el campus.</p>
                     <div className="space-y-4 border-l-2 border-slate-100 ml-3 pl-5">
                       <div className="relative">
@@ -195,7 +195,7 @@ export default function MentorPage() {
 
                   <div className="pt-6 border-t border-slate-100">
                     <h3 className="text-base font-serif text-slate-900 mb-1">Vincular Familia</h3>
-                    <form onSubmit={handleLinkParent} className="flex gap-3 max-w-md">
+                    <form onSubmit={handleLinkParent} className="flex flex-col sm:flex-row gap-3 max-w-md">
                       <input
                         type="text"
                         value={parentUsername}
@@ -220,19 +220,19 @@ export default function MentorPage() {
 
               {activeTab === 'estadisticas' && (
                 <div>
-                  <h2 className="text-2xl font-serif text-slate-900 mb-2">Estadísticas del Alumno</h2>
+                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Estadísticas del Alumno</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
                       <span className="text-xs text-slate-400 block mb-1">SkillCoins Totales</span>
-                      <span className="text-2xl font-bold text-slate-900">{selectedStudent.skillCoins} SC</span>
+                      <span className="text-xl sm:text-2xl font-bold text-slate-900">{selectedStudent.skillCoins} SC</span>
                     </div>
                     <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
                       <span className="text-xs text-slate-400 block mb-1">Actividades Realizadas</span>
-                      <span className="text-2xl font-bold text-slate-900">1</span>
+                      <span className="text-xl sm:text-2xl font-bold text-slate-900">1</span>
                     </div>
                     <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
                       <span className="text-xs text-slate-400 block mb-1">Promedio de Acierto</span>
-                      <span className="text-2xl font-bold text-slate-900">80%</span>
+                      <span className="text-xl sm:text-2xl font-bold text-slate-900">80%</span>
                     </div>
                   </div>
                   <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center bg-slate-50/50">
@@ -243,7 +243,7 @@ export default function MentorPage() {
 
               {activeTab === 'asignar' && (
                 <div>
-                  <h2 className="text-2xl font-serif text-slate-900 mb-2">Asignar Tarea</h2>
+                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Asignar Tarea</h2>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Asignatura</label>
@@ -253,7 +253,7 @@ export default function MentorPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Área</label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {['Vocabulary', 'Grammar', 'Reading', 'Listening', 'Writing'].map((it, idx) => (
                           <span key={it} className={`px-3 py-1.5 rounded-lg border text-xs font-semibold ${idx === 0 ? 'bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>
                             {it}
@@ -265,11 +265,10 @@ export default function MentorPage() {
                 </div>
               )}
 
-              {/* CALCÚLALO CON ENLACE DIRECTO LIMPIO A https://calculalo.app/ */}
               {activeTab === 'calculalo' && (
                 <div>
-                  <h2 className="text-2xl font-serif text-slate-900 mb-2">Calcúlalo (Acceso Mentor)</h2>
-                  <div className="bg-[#FDFBF7] p-6 rounded-2xl border border-slate-100 mb-6">
+                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Calcúlalo (Acceso Mentor)</h2>
+                  <div className="bg-[#FDFBF7] p-5 sm:p-6 rounded-2xl border border-slate-100 mb-6">
                     <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones de acceso:</h3>
                     <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
                       <li>Pulsa en el botón «Acceder a Calcúlalo».</li>
@@ -290,8 +289,8 @@ export default function MentorPage() {
 
               {activeTab === 'memiro' && (
                 <div>
-                  <h2 className="text-2xl font-serif text-slate-900 mb-2">MeMiro</h2>
-                  <div className="bg-[#FDFBF7] p-6 rounded-2xl border border-slate-100 mb-6">
+                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">MeMiro</h2>
+                  <div className="bg-[#FDFBF7] p-5 sm:p-6 rounded-2xl border border-slate-100 mb-6">
                     <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones:</h3>
                     <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
                       <li>Haz clic en «Acceder a MeMiro».</li>
@@ -309,10 +308,9 @@ export default function MentorPage() {
                 </div>
               )}
 
-              {/* ASIGNAR INFORME COMPLETAMENTE EN BLANCO SEGÚN SPRINT 1 */}
               {activeTab === 'informe' && (
                 <div>
-                  <h2 className="text-2xl font-serif text-slate-900 mb-2">Asignar Informe</h2>
+                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Asignar Informe</h2>
                   <div className="min-h-[220px]" />
                 </div>
               )}

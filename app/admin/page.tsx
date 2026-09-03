@@ -126,24 +126,28 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] pb-16 font-sans">
-      {/* Cabecera */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+      {/* Cabecera con botón de apagado en negro */}
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-6 h-6 text-emerald-800" />
           <div>
-            <h1 className="font-serif text-2xl text-slate-900">Panel de Administración</h1>
-            <p className="text-xs text-slate-500">Gestión general de cuentas y permisos</p>
+            <h1 className="font-serif text-xl sm:text-2xl text-slate-900">Panel de Administración</h1>
+            <p className="text-[11px] sm:text-xs text-slate-500">Gestión general de cuentas y permisos</p>
           </div>
         </div>
         <Link 
           href="/" 
-          className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
+          title="Cerrar sesión"
+          className="p-2 sm:p-2.5 rounded-xl border border-slate-900 bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center shadow-sm"
         >
-          Cerrar sesión
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+            <line x1="12" y1="2" x2="12" y2="12" />
+          </svg>
         </Link>
       </header>
 
-      <main className="max-w-6xl mx-auto p-6 space-y-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Notificaciones */}
         {msg && (
           <div
@@ -159,8 +163,8 @@ export default function AdminPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* COLUMNA 1: Formulario para crear usuarios */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4 h-fit">
+          {/* Formulario */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4 h-fit">
             <div className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-emerald-800" />
               <h2 className="font-serif text-lg text-slate-900">Crear nuevo usuario</h2>
@@ -234,15 +238,13 @@ export default function AdminPage() {
             </form>
           </div>
 
-          {/* COLUMNA 2 & 3: Lista de usuarios registrados */}
-          <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-serif text-lg text-slate-900">Usuarios registrados ({users.length})</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Visualiza, edita o elimina las cuentas del sistema.
-                </p>
-              </div>
+          {/* Tabla */}
+          <div className="lg:col-span-2 bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+            <div>
+              <h2 className="font-serif text-lg text-slate-900">Usuarios registrados ({users.length})</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Visualiza, edita o elimina las cuentas del sistema.
+              </p>
             </div>
 
             <div className="overflow-x-auto">
@@ -268,7 +270,6 @@ export default function AdminPage() {
                             user.role === "admin"
                               ? "bg-purple-100 text-purple-700"
                               : user.role === "mentor"
-                              ? "bg-blue-100 text-blue-700"
                               : user.role === "padre"
                               ? "bg-amber-100 text-amber-700"
                               : "bg-emerald-100 text-emerald-700"
@@ -308,7 +309,7 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* Modal para Editar */}
+      {/* Modal Editar */}
       {editingUser && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 border border-slate-200 max-w-md w-full shadow-2xl space-y-4">
