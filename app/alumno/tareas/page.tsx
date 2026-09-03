@@ -1,83 +1,144 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-
-const questions = [
-  { text: "Choose the correct answer: 'She ___ my best friend.'", options: ["is", "are", "am", "be"], correct: 0 },
-  { text: "What is the opposite of 'Difficult'?", options: ["Hard", "Easy", "Fast", "Slow"], correct: 1 }
-];
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function TareasPage() {
-  const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
-  const [done, setDone] = useState(false);
+  const router = useRouter();
+  const [inActivity, setInActivity] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
 
-  const nextQuestion = () => {
-    if (index + 1 < questions.length) {
-      setIndex(index + 1);
-      setSelected(null);
-    } else {
-      setDone(true);
-    }
+  const resetTask = () => {
+    setInActivity(false);
+    setSelectedAnswer(null);
+    setIsFinished(false);
   };
 
   return (
-    <div className="min-h-screen bg-kiru-bg">
-      <nav className="bg-kiru-card border-b border-kiru-border px-6 py-4 flex items-center justify-between">
-        <div className="flex gap-3 text-sm font-medium">
-          <Link href="/alumno" className="text-kiru-muted hover:text-kiru-text px-3.5 py-1.5 rounded-xl">Inicio</Link>
-          <Link href="/alumno/tareas" className="text-kiru-forest bg-kiru-forest-light px-3.5 py-1.5 rounded-xl font-semibold">Tareas</Link>
-          <Link href="/alumno/calculalo" className="text-kiru-muted hover:text-kiru-text px-3.5 py-1.5 rounded-xl">Calcúlalo</Link>
+    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-6 md:p-10">
+      <div className="max-w-4xl mx-auto">
+        
+        {/* Cabecera con cierre de sesión */}
+        <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
+          <div>
+            <h1 className="text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
+            <span className="text-xs text-slate-500 font-medium">Panel del Alumno</span>
+          </div>
+          <button
+            onClick={() => router.push('/')}
+            className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-300 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-slate-50 transition"
+          >
+            Cerrar sesión
+          </button>
         </div>
-        <Link href="/" className="text-xs font-semibold text-red-500 hover:underline">Cerrar sesión</Link>
-      </nav>
 
-      <main className="max-w-xl mx-auto p-6">
-        <div className="bg-kiru-card rounded-3xl p-8 border border-kiru-border shadow-sm">
-          {!done ? (
+        {/* Navegación por rutas */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-8 p-2 flex flex-wrap gap-2">
+          <Link href="/alumno" className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+            Inicio
+          </Link>
+          <Link href="/alumno/tareas" className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white shadow-sm transition">
+            Tareas
+          </Link>
+          <Link href="/alumno" className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+            Progreso
+          </Link>
+          <Link href="/alumno" className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+            Perfil
+          </Link>
+          <Link href="/alumno/calculalo" className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+            Calcúlalo
+          </Link>
+        </div>
+
+        {/* Pantalla de tareas y actividad interactiva */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
+          {!inActivity ? (
             <div>
-              <p className="text-xs font-semibold text-kiru-forest uppercase tracking-wider mb-1">Inglés · Unit 1</p>
-              <h2 className="font-serif text-2xl mb-6">Pregunta {index + 1} de {questions.length}</h2>
-              <p className="text-sm font-medium text-kiru-text mb-4">{questions[index].text}</p>
-              
-              <div className="space-y-2.5 mb-6">
-                {questions[index].options.map((opt, i) => (
+              <h2 className="text-2xl font-serif text-[#0F172A] mb-6">Tareas Asignadas</h2>
+              <div className="p-6 border border-slate-100 rounded-2xl bg-[#FDFBF7] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    INGLÉS
+                  </span>
+                  <h3 className="text-xl font-serif text-slate-900 mt-1">
+                    Unit 1 · Vocabulary
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    10 ejercicios · Dificultad: Media
+                  </p>
+                </div>
+                <button
+                  onClick={() => setInActivity(true)}
+                  className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+                >
+                  Comenzar
+                </button>
+              </div>
+            </div>
+          ) : !isFinished ? (
+            <div>
+              <div className="flex justify-between items-center mb-6 pb-3 border-b border-slate-100">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Vocabulary · Unit 1
+                </span>
+                <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+                  Pregunta 1/10
+                </span>
+              </div>
+
+              <h3 className="text-lg font-serif text-slate-900 mb-6">
+                Choose the correct answer:
+              </h3>
+
+              <div className="space-y-3 mb-6">
+                {['Answer A', 'Answer B', 'Answer C', 'Answer D'].map((ans) => (
                   <button
-                    key={i}
-                    onClick={() => setSelected(i)}
-                    className={`w-full text-left p-4 rounded-2xl border text-sm transition-all ${
-                      selected === i 
-                        ? "border-kiru-forest bg-kiru-forest-light text-kiru-forest font-semibold" 
-                        : "border-kiru-border bg-[#F7F6F3] text-kiru-text hover:bg-[#EFECE6]"
+                    key={ans}
+                    onClick={() => setSelectedAnswer(ans)}
+                    className={`w-full p-4 rounded-xl border text-sm text-left transition ${
+                      selectedAnswer === ans
+                        ? 'border-slate-900 bg-slate-50 font-bold text-slate-900'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                   >
-                    {opt}
+                    {ans}
                   </button>
                 ))}
               </div>
 
               <button
-                onClick={nextQuestion}
-                disabled={selected === null}
-                className="w-full py-3.5 bg-kiru-forest text-white rounded-2xl text-sm font-medium disabled:opacity-40 transition-opacity"
+                onClick={() => {
+                  if (selectedAnswer) setIsFinished(true);
+                }}
+                disabled={!selectedAnswer}
+                className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 disabled:opacity-40 transition"
               >
-                {index + 1 === questions.length ? "Finalizar" : "Siguiente pregunta"}
+                Siguiente
               </button>
             </div>
           ) : (
-            <div className="text-center py-6 space-y-4">
-              <h2 className="font-serif text-3xl text-kiru-text">¡Completado!</h2>
-              <p className="text-sm text-kiru-muted">Has terminado la actividad con 8/10.</p>
-              <div>
-                <Link href="/alumno" className="inline-block px-6 py-3 bg-kiru-forest text-white rounded-2xl text-sm font-medium">
-                  Volver al inicio
-                </Link>
-              </div>
+            <div className="text-center py-6">
+              <h3 className="text-2xl font-serif text-slate-900 mb-2">
+                Resultado de la actividad
+              </h3>
+              <p className="text-sm text-slate-600 mb-6">
+                Has completado la actividad correctamente. Puntuación obtenida:{' '}
+                <span className="font-bold text-slate-900">8/10</span>
+              </p>
+              <button
+                onClick={resetTask}
+                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+              >
+                Volver a Tareas
+              </button>
             </div>
           )}
         </div>
-      </main>
+
+      </div>
     </div>
   );
 }
