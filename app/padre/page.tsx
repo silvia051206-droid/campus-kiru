@@ -52,7 +52,7 @@ export default function PanelFamiliarPage() {
 
   return (
     <div className="min-h-screen bg-kiru-bg pb-16">
-      {/* Cabecera del Panel Familiar */}
+      {/* Cabecera del Panel Familiar con botón cerrar sesión en rojo */}
       <header className="bg-kiru-card border-b border-kiru-border px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div>
           <h1 className="font-serif text-2xl text-kiru-text">Panel Familiar</h1>
@@ -62,7 +62,10 @@ export default function PanelFamiliarPage() {
           <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-kiru-forest-light text-kiru-forest text-xs font-semibold">
             <Users className="w-3.5 h-3.5" /> Familia Fernández
           </span>
-          <Link href="/" className="text-xs font-semibold text-red-500 hover:underline">
+          <Link 
+            href="/" 
+            className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
+          >
             Cerrar sesión
           </Link>
         </div>
@@ -151,7 +154,7 @@ export default function PanelFamiliarPage() {
           </button>
         </nav>
 
-        {/* 1. SECCIÓN: INICIO (HISTORIAL / AGENDA CRONOLÓGICA) */}
+        {/* 1. SECCIÓN: INICIO */}
         {activeTab === "inicio" && (
           <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-6">
             <div>
@@ -290,7 +293,7 @@ export default function PanelFamiliarPage() {
           </div>
         )}
 
-        {/* 4. SECCIÓN: INFORME DEL MENTOR */}
+        {/* 4. SECCIÓN: INFORME DEL MENTOR (DEJADA EN BLANCO SEGÚN REQUERIMIENTOS) */}
         {activeTab === "informe" && (
           <div className="bg-kiru-card rounded-3xl p-8 border border-kiru-border shadow-sm max-w-2xl mx-auto space-y-6">
             <div className="flex items-center justify-between border-b border-kiru-border pb-4">
@@ -303,25 +306,8 @@ export default function PanelFamiliarPage() {
               </span>
             </div>
 
-            <div className="space-y-4 text-xs text-kiru-text">
-              <div className="p-4 bg-[#F7F6F3] rounded-2xl border border-kiru-border space-y-2">
-                <p className="font-bold text-kiru-forest uppercase tracking-wider text-[11px]">Observaciones del Mentor</p>
-                <p className="leading-relaxed text-kiru-muted">
-                  Carmen mantiene un excelente compromiso y regularidad. Ha afianzado el vocabulario básico y las estructuras del tiempo verbal presente, alcanzando una precisión del 92%.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#F7F6F3] rounded-2xl border border-kiru-border">
-                  <p className="text-kiru-muted font-medium">Nivel actual</p>
-                  <p className="text-sm font-bold text-kiru-text mt-0.5">{studentData.level} ({studentData.skillCoins} SC)</p>
-                </div>
-                <div className="p-3 bg-[#F7F6F3] rounded-2xl border border-kiru-border">
-                  <p className="text-kiru-muted font-medium">Próximo objetivo</p>
-                  <p className="text-sm font-bold text-kiru-text mt-0.5">Unit 3: Past Continuous</p>
-                </div>
-              </div>
-            </div>
+            {/* Espacio en blanco reservado para el sistema de informes */}
+            <div className="min-h-[160px]" />
           </div>
         )}
       </main>
