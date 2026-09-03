@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Student {
   id: string;
@@ -25,15 +26,19 @@ const initialStudents: Student[] = [
 ];
 
 export default function MentorPage() {
+  const router = useRouter();
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [activeTab, setActiveTab] = useState<
     'inicio' | 'estadisticas' | 'asignar' | 'calculalo' | 'memiro' | 'informe'
   >('inicio');
 
-  // Estado para la vinculación de padres
   const [parentUsername, setParentUsername] = useState('');
   const [linkSuccess, setLinkSuccess] = useState(false);
+
+  const handleLogout = () => {
+    router.push('/');
+  };
 
   const handleLinkParent = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,386 +54,272 @@ export default function MentorPage() {
     setTimeout(() => setLinkSuccess(false), 3000);
   };
 
-  // VISTA 1: LISTADO DE ALUMNOS (PANEL PRINCIPAL DEL MENTOR)
-  if (!selectedStudent) {
-    return (
-      <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-8">
-        <div className="max-w-5xl mx-auto">
-          <header className="mb-8">
-            <h1 className="text-3xl font-serif text-[#0F172A]">
-              Panel del Mentor
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Selecciona un alumno para revisar su historial, vincular a su familia o gestionar sus actividades.
-            </p>
-          </header>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {students.map((student) => (
-              <div
-                key={student.id}
-                onClick={() => {
-                  setSelectedStudent(student);
-                  setParentUsername(student.linkedParent || '');
-                }}
-                className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer flex items-center gap-5"
-              >
-                {/* Avatar a la izquierda */}
-                <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-lg font-bold text-slate-600 shrink-0">
-                  {student.avatarText}
-                </div>
-
-                <div className="flex-1">
-                  <h3 className="text-xl font-serif text-slate-900">
-                    {student.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
-                      Nivel: {student.level}
-                    </span>
-                    {student.linkedParent && (
-                      <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">
-                        Familia: @{student.linkedParent}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    Último acceso: <span className="text-slate-600 font-medium">{student.lastAccess}</span>
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // VISTA 2: PERFIL INDIVIDUAL CON NAVEGACIÓN SUPERIOR HORIZONTAL
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-8">
       <div className="max-w-5xl mx-auto">
         
-        {/* Cabecera del alumno seleccionado */}
-        <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={() => setSelectedStudent(null)}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-900 border border-slate-200 bg-white px-3 py-1.5 rounded-lg transition"
-          >
-            ← Volver a lista de alumnos
-          </button>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500">Alumno:</span>
-            <span className="text-lg font-serif text-slate-900">
-              {selectedStudent.name}
-            </span>
+        {/* BARRA SUPERIOR CON CIERRE DE SESIÓN */}
+        <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
+          <div>
+            <h1 className="text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
+            <span className="text-xs text-slate-500 font-medium">Panel del Mentor</span>
           </div>
+          <button
+            onClick={handleLogout}
+            className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-300 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-slate-50 transition"
+          >
+            Cerrar sesión
+          </button>
         </div>
 
-        {/* NAVEGACIÓN SUPERIOR EXACTA SPRINT 1 */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-6 p-2">
-          <nav className="flex flex-wrap gap-2">
-            {[
-              { id: 'inicio', label: 'Inicio' },
-              { id: 'estadisticas', label: 'Estadísticas' },
-              { id: 'asignar', label: 'Asignar tarea' },
-              { id: 'calculalo', label: 'Calcúlalo' },
-              { id: 'memiro', label: 'MeMiro' },
-              { id: 'informe', label: 'Asignar informe' },
-            ].map((tab) => (
+        {/* LISTA PRINCIPAL DE ALUMNOS */}
+        {!selectedStudent ? (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-3xl font-serif text-[#0F172A]">Alumnos asignados</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Selecciona un alumno para revisar su historial o gestionar actividades.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {students.map((student) => (
+                <div
+                  key={student.id}
+                  onClick={() => {
+                    setSelectedStudent(student);
+                    setParentUsername(student.linkedParent || '');
+                  }}
+                  className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer flex items-center gap-5"
+                >
+                  <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-lg font-bold text-slate-600 shrink-0">
+                    {student.avatarText}
+                  </div>
+
+                  <div className="flex-1">
+                    <h3 className="text-xl font-serif text-slate-900">
+                      {student.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
+                        Nivel: {student.level}
+                      </span>
+                      {student.linkedParent && (
+                        <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">
+                          Familia: @{student.linkedParent}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Último acceso: <span className="text-slate-600 font-medium">{student.lastAccess}</span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* VISTA INDIVIDUAL DEL ALUMNO */
+          <div>
+            <div className="flex items-center justify-between mb-6">
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition ${
-                  activeTab === tab.id
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-50'
-                }`}
+                onClick={() => setSelectedStudent(null)}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-900 border border-slate-200 bg-white px-3 py-1.5 rounded-lg transition"
               >
-                {tab.label}
+                ← Volver a lista de alumnos
               </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* CONTENIDO SEGÚN LA PESTAÑA SELECCIONADA */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
-          
-          {/* 1. INICIO: Historial cronológico + Vinculación Familiar */}
-          {activeTab === 'inicio' && (
-            <div className="space-y-8">
-              <div>
-                <h2 className="text-2xl font-serif text-slate-900 mb-2">
-                  Historial de Actividad
-                </h2>
-                <p className="text-xs text-slate-400 mb-6">
-                  Registro cronológico de la interacción del alumno con el campus.
-                </p>
-
-                <div className="space-y-4 border-l-2 border-slate-100 ml-3 pl-5">
-                  <div className="relative">
-                    <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                    <p className="text-xs font-bold text-slate-400">Hoy 11:58</p>
-                    <p className="text-sm font-medium text-slate-800 mt-0.5">
-                      Ha terminado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span> con una puntuación de 8/10.
-                    </p>
-                  </div>
-
-                  <div className="relative">
-                    <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                    <p className="text-xs font-bold text-slate-400">Hoy 11:52</p>
-                    <p className="text-sm font-medium text-slate-800 mt-0.5">
-                      Ha realizado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span>.
-                    </p>
-                  </div>
-
-                  <div className="relative">
-                    <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                    <p className="text-xs font-bold text-slate-400">Hoy 11:50</p>
-                    <p className="text-sm font-medium text-slate-800 mt-0.5">
-                      El alumno ha accedido al campus.
-                    </p>
-                  </div>
-                </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-500">Alumno:</span>
+                <span className="text-lg font-serif text-slate-900">
+                  {selectedStudent.name}
+                </span>
               </div>
+            </div>
 
-              {/* BLOQUE PARA VINCULAR PADRE / FAMILIA */}
-              <div className="pt-6 border-t border-slate-100">
-                <h3 className="text-base font-serif text-slate-900 mb-1">
-                  Vincular Familia / Padre / Madre
-                </h3>
-                <p className="text-xs text-slate-500 mb-4">
-                  Asigna la cuenta de la familia que tendrá acceso al seguimiento del alumno.
-                </p>
-                <form onSubmit={handleLinkParent} className="flex gap-3 max-w-md">
-                  <input
-                    type="text"
-                    value={parentUsername}
-                    onChange={(e) => setParentUsername(e.target.value)}
-                    placeholder="Usuario de la familia (ej: familia)"
-                    className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800"
-                    required
-                  />
+            {/* NAVEGACIÓN SUPERIOR HORIZONTAL */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-6 p-2">
+              <nav className="flex flex-wrap gap-2">
+                {[
+                  { id: 'inicio', label: 'Inicio' },
+                  { id: 'estadisticas', label: 'Estadísticas' },
+                  { id: 'asignar', label: 'Asignar tarea' },
+                  { id: 'calculalo', label: 'Calcúlalo' },
+                  { id: 'memiro', label: 'MeMiro' },
+                  { id: 'informe', label: 'Asignar informe' },
+                ].map((tab) => (
                   <button
-                    type="submit"
-                    className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition ${
+                      activeTab === tab.id
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
                   >
-                    Vincular
+                    {tab.label}
                   </button>
-                </form>
-                {linkSuccess && (
-                  <p className="text-xs text-emerald-600 font-semibold mt-2">
-                    Cuenta familiar vinculada correctamente.
-                  </p>
-                )}
-              </div>
+                ))}
+              </nav>
             </div>
-          )}
 
-          {/* 2. ESTADÍSTICAS */}
-          {activeTab === 'estadisticas' && (
-            <div>
-              <h2 className="text-2xl font-serif text-slate-900 mb-2">
-                Estadísticas del Alumno
-              </h2>
-              <p className="text-xs text-slate-400 mb-6">
-                Estructura de progreso, resultados y evolución para análisis pedagógico.
-              </p>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
+              {activeTab === 'inicio' && (
+                <div className="space-y-8">
+                  <div>
+                    <h2 className="text-2xl font-serif text-slate-900 mb-2">Historial de Actividad</h2>
+                    <p className="text-xs text-slate-400 mb-6">Registro cronológico de la interacción del alumno con el campus.</p>
+                    <div className="space-y-4 border-l-2 border-slate-100 ml-3 pl-5">
+                      <div className="relative">
+                        <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
+                        <p className="text-xs font-bold text-slate-400">Hoy 11:58</p>
+                        <p className="text-sm font-medium text-slate-800 mt-0.5">
+                          Ha terminado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span> con 8/10.
+                        </p>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
+                        <p className="text-xs font-bold text-slate-400">Hoy 11:52</p>
+                        <p className="text-sm font-medium text-slate-800 mt-0.5">
+                          Ha realizado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span>.
+                        </p>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
+                        <p className="text-xs font-bold text-slate-400">Hoy 11:50</p>
+                        <p className="text-sm font-medium text-slate-800 mt-0.5">
+                          El alumno ha accedido al campus.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
-                  <span className="text-xs text-slate-400 block mb-1">SkillCoins Totales</span>
-                  <span className="text-2xl font-bold text-slate-900">{selectedStudent.skillCoins} SC</span>
-                </div>
-                <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
-                  <span className="text-xs text-slate-400 block mb-1">Actividades Realizadas</span>
-                  <span className="text-2xl font-bold text-slate-900">1</span>
-                </div>
-                <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
-                  <span className="text-xs text-slate-400 block mb-1">Promedio de Acierto</span>
-                  <span className="text-2xl font-bold text-slate-900">80%</span>
-                </div>
-              </div>
-
-              <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center bg-slate-50/50">
-                <p className="text-xs font-medium text-slate-400">
-                  Estructura preparada para conexión de métricas de evolución y gráficas detalladas.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* 3. ASIGNAR TAREA */}
-          {activeTab === 'asignar' && (
-            <div>
-              <h2 className="text-2xl font-serif text-slate-900 mb-2">
-                Asignar Tarea
-              </h2>
-              <p className="text-xs text-slate-400 mb-6">
-                Configuración del sistema de actividades de Método Kiru.
-              </p>
-
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                    Asignatura
-                  </label>
-                  <select className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white text-slate-800">
-                    <option>Inglés</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                    Área temática
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    {['Vocabulary', 'Grammar', 'Reading', 'Listening', 'Writing'].map((item, idx) => (
+                  <div className="pt-6 border-t border-slate-100">
+                    <h3 className="text-base font-serif text-slate-900 mb-1">Vincular Familia</h3>
+                    <form onSubmit={handleLinkParent} className="flex gap-3 max-w-md">
+                      <input
+                        type="text"
+                        value={parentUsername}
+                        onChange={(e) => setParentUsername(e.target.value)}
+                        placeholder="Usuario de la familia"
+                        className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800"
+                        required
+                      />
                       <button
-                        key={item}
-                        type="button"
-                        className={`p-2.5 rounded-xl border text-xs font-semibold ${
-                          idx === 0
-                            ? 'border-slate-900 bg-slate-900 text-white'
-                            : 'border-slate-200 bg-white text-slate-600'
-                        }`}
+                        type="submit"
+                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold"
                       >
-                        {item}
+                        Vincular
                       </button>
-                    ))}
+                    </form>
+                    {linkSuccess && (
+                      <p className="text-xs text-emerald-600 font-semibold mt-2">Familia vinculada.</p>
+                    )}
                   </div>
                 </div>
+              )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                      Nivel / Unit
-                    </label>
-                    <select className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white text-slate-800">
-                      <option>A1 · Unit 1</option>
-                      <option>A1 · Unit 2</option>
-                      <option>A2 · Unit 1</option>
-                    </select>
+              {activeTab === 'estadisticas' && (
+                <div>
+                  <h2 className="text-2xl font-serif text-slate-900 mb-2">Estadísticas del Alumno</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
+                      <span className="text-xs text-slate-400 block mb-1">SkillCoins Totales</span>
+                      <span className="text-2xl font-bold text-slate-900">{selectedStudent.skillCoins} SC</span>
+                    </div>
+                    <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
+                      <span className="text-xs text-slate-400 block mb-1">Actividades Realizadas</span>
+                      <span className="text-2xl font-bold text-slate-900">1</span>
+                    </div>
+                    <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
+                      <span className="text-xs text-slate-400 block mb-1">Promedio de Acierto</span>
+                      <span className="text-2xl font-bold text-slate-900">80%</span>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                      Dificultad
-                    </label>
-                    <select className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white text-slate-800">
-                      <option>Baja</option>
-                      <option>Media</option>
-                      <option>Alta</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                      Nº Ejercicios
-                    </label>
-                    <select className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white text-slate-800">
-                      <option>5 ejercicios</option>
-                      <option>10 ejercicios</option>
-                      <option>15 ejercicios</option>
-                    </select>
+                  <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center bg-slate-50/50">
+                    <p className="text-xs font-medium text-slate-400">Estructura preparada para conexión de métricas.</p>
                   </div>
                 </div>
+              )}
 
-                <div className="pt-4 flex gap-3">
-                  <button
-                    type="button"
-                    className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50"
+              {activeTab === 'asignar' && (
+                <div>
+                  <h2 className="text-2xl font-serif text-slate-900 mb-2">Asignar Tarea</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Asignatura</label>
+                      <select className="w-full border border-slate-200 rounded-xl p-2.5 text-xs bg-white">
+                        <option>Inglés</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Área</label>
+                      <div className="flex gap-2">
+                        {['Vocabulary', 'Grammar', 'Reading', 'Listening', 'Writing'].map((it, idx) => (
+                          <span key={it} className={`px-3 py-1.5 rounded-lg border text-xs font-semibold ${idx === 0 ? 'bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>
+                            {it}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CALCÚLALO CON ENLACE DIRECTO A https://calculalo.app/ */}
+              {activeTab === 'calculalo' && (
+                <div>
+                  <h2 className="text-2xl font-serif text-slate-900 mb-2">Calcúlalo (Acceso Mentor)</h2>
+                  <div className="bg-[#FDFBF7] p-6 rounded-2xl border border-slate-100 mb-6">
+                    <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones de acceso:</h3>
+                    <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
+                      <li>Pulsa en el botón «Acceder a Calcúlalo».</li>
+                      <li>Selecciona la opción <strong>«Docente»</strong>[cite: 3].</li>
+                      <li>Introduce tus claves de tutor.</li>
+                    </ol>
+                  </div>
+                  <a
+                    href="https://calculalo.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
                   >
-                    Previsualizar
-                  </button>
-                  <button
-                    type="button"
-                    className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800"
-                  >
-                    Asignar actividad
-                  </button>
+                    Acceder a Calcúlalo
+                  </a>
                 </div>
-              </div>
+              )}
+
+              {activeTab === 'memiro' && (
+                <div>
+                  <h2 className="text-2xl font-serif text-slate-900 mb-2">MeMiro</h2>
+                  <div className="bg-[#FDFBF7] p-6 rounded-2xl border border-slate-100 mb-6">
+                    <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones:</h3>
+                    <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
+                      <li>Haz clic en «Acceder a MeMiro».</li>
+                      <li>Inicia sesión con tu cuenta de tutor/mentor.</li>
+                    </ol>
+                  </div>
+                  <a
+                    href="https://memiro.metodokiru.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
+                  >
+                    Acceder a MeMiro
+                  </a>
+                </div>
+              )}
+
+              {activeTab === 'informe' && (
+                <div>
+                  <h2 className="text-2xl font-serif text-slate-900 mb-2">Asignar Informe</h2>
+                  <div className="border border-dashed border-slate-200 rounded-xl p-12 text-center bg-slate-50/30">
+                    <p className="text-xs font-medium text-slate-400">Sección en blanco preparada para futuros sprints[cite: 3].</p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-
-          {/* 4. CALCÚLALO */}
-          {activeTab === 'calculalo' && (
-            <div>
-              <h2 className="text-2xl font-serif text-slate-900 mb-2">
-                Calcúlalo (Acceso Mentor)
-              </h2>
-              <p className="text-xs text-slate-400 mb-6">
-                Plataforma de cálculo y agilidad matemática.
-              </p>
-
-              <div className="bg-[#FDFBF7] p-6 rounded-2xl border border-slate-100 mb-6">
-                <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones de acceso para profesores:</h3>
-                <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
-                  <li>Pulsa en el botón inferior «Acceder a Calcúlalo».</li>
-                  <li>Selecciona la opción <strong>«Acceder como profesor»</strong>.</li>
-                  <li>Introduce tus credenciales de mentor asignadas.</li>
-                </ol>
-              </div>
-
-              <a
-                href="https://calculalo.metodokiru.com"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800"
-              >
-                Acceder a Calcúlalo
-              </a>
-            </div>
-          )}
-
-          {/* 5. MEMIRO */}
-          {activeTab === 'memiro' && (
-            <div>
-              <h2 className="text-2xl font-serif text-slate-900 mb-2">
-                MeMiro
-              </h2>
-              <p className="text-xs text-slate-400 mb-6">
-                Herramienta metodológica y de evaluación pedagógica.
-              </p>
-
-              <div className="bg-[#FDFBF7] p-6 rounded-2xl border border-slate-100 mb-6">
-                <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones de acceso a la plataforma:</h3>
-                <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
-                  <li>Haz clic en el enlace oficial de MeMiro.</li>
-                  <li>Inicia sesión con tu cuenta de tutor/mentor.</li>
-                  <li>Consulta y actualiza la fase metodológica del alumno.</li>
-                </ol>
-              </div>
-
-              <a
-                href="https://memiro.metodokiru.com"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800"
-              >
-                Acceder a MeMiro
-              </a>
-            </div>
-          )}
-
-          {/* 6. ASIGNAR INFORME */}
-          {activeTab === 'informe' && (
-            <div>
-              <h2 className="text-2xl font-serif text-slate-900 mb-2">
-                Asignar Informe
-              </h2>
-              <p className="text-xs text-slate-400 mb-8">
-                Módulo reservado para la generación y envío de informes periódicos a las familias.
-              </p>
-
-              <div className="border border-dashed border-slate-200 rounded-xl p-12 text-center bg-slate-50/30">
-                <p className="text-xs font-medium text-slate-400">
-                  Sección preparada para el desarrollo de informes en los siguientes sprints.
-                </p>
-              </div>
-            </div>
-          )}
-
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
