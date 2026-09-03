@@ -20,7 +20,7 @@ export default function TareasPage() {
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-6 md:p-10">
       <div className="max-w-4xl mx-auto">
         
-        {/* Cabecera con cierre de sesión */}
+        {/* Cabecera con cierre de sesión en rojo */}
         <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
           <div>
             <h1 className="text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
@@ -28,7 +28,7 @@ export default function TareasPage() {
           </div>
           <button
             onClick={() => router.push('/')}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-300 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-slate-50 transition"
+            className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
           >
             Cerrar sesión
           </button>
