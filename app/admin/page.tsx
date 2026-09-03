@@ -3,16 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  Users, 
   UserPlus, 
   Trash2, 
   Edit3, 
-  CheckCircle2, 
   ShieldCheck, 
-  ArrowLeft,
   X,
-  Save,
-  KeyRound
+  Save
 } from "lucide-react";
 
 interface UserAccount {
@@ -34,17 +30,14 @@ const DEFAULT_USERS: UserAccount[] = [
 export default function AdminPage() {
   const [users, setUsers] = useState<UserAccount[]>(DEFAULT_USERS);
   
-  // Estados para nuevo usuario
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"alumno" | "mentor" | "padre" | "admin">("alumno");
   
-  // Estado para editar usuario
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
   const [msg, setMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  // Cargar usuarios de localStorage si existen
   useEffect(() => {
     const saved = localStorage.getItem("kiru_custom_users");
     if (saved) {
@@ -61,7 +54,6 @@ export default function AdminPage() {
     localStorage.setItem("kiru_custom_users", JSON.stringify(updatedUsers));
   };
 
-  // Crear usuario
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !username.trim() || !password.trim()) {
@@ -95,7 +87,6 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 4000);
   };
 
-  // Guardar cambios al editar
   const handleUpdateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
@@ -122,7 +113,6 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 4000);
   };
 
-  // Eliminar usuario
   const handleDeleteUser = (id: string, userToDelete: string) => {
     if (userToDelete === "admin") {
       setMsg({ text: "No puedes eliminar el usuario administrador principal.", type: "error" });
@@ -135,14 +125,14 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-kiru-bg pb-16">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] pb-16 font-sans">
       {/* Cabecera */}
-      <header className="bg-kiru-card border-b border-kiru-border px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
-          <ShieldCheck className="w-6 h-6 text-kiru-forest" />
+          <ShieldCheck className="w-6 h-6 text-emerald-800" />
           <div>
-            <h1 className="font-serif text-2xl text-kiru-text">Panel de Administración</h1>
-            <p className="text-xs text-kiru-muted">Gestión general de cuentas y permisos</p>
+            <h1 className="font-serif text-2xl text-slate-900">Panel de Administración</h1>
+            <p className="text-xs text-slate-500">Gestión general de cuentas y permisos</p>
           </div>
         </div>
         <Link 
@@ -157,10 +147,10 @@ export default function AdminPage() {
         {/* Notificaciones */}
         {msg && (
           <div
-            className={`p-4 rounded-2xl text-xs font-medium flex items-center justify-between animate-fadeIn ${
+            className={`p-4 rounded-2xl text-xs font-medium flex items-center justify-between transition-all ${
               msg.type === "success"
                 ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
-                : "bg-red-50 border border-red-200 text-red-800"
+                : "bg-rose-50 border border-rose-200 text-rose-800"
             }`}
           >
             <span>{msg.text}</span>
@@ -170,18 +160,18 @@ export default function AdminPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* COLUMNA 1: Formulario para crear usuarios */}
-          <div className="bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-4 h-fit">
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4 h-fit">
             <div className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-kiru-forest" />
-              <h2 className="font-serif text-lg text-kiru-text">Crear nuevo usuario</h2>
+              <UserPlus className="w-5 h-5 text-emerald-800" />
+              <h2 className="font-serif text-lg text-slate-900">Crear nuevo usuario</h2>
             </div>
-            <p className="text-xs text-kiru-muted">
+            <p className="text-xs text-slate-500">
               Registra nuevos alumnos, mentores o tutores legales.
             </p>
 
             <form onSubmit={handleCreateUser} className="space-y-3 pt-2">
               <div>
-                <label className="block text-[11px] font-bold text-kiru-muted uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                   Nombre completo
                 </label>
                 <input
@@ -189,12 +179,12 @@ export default function AdminPage() {
                   placeholder="Ej: Lucía Navarro"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full p-3 rounded-2xl border border-kiru-border bg-[#F7F6F3] text-xs font-medium text-kiru-text focus:outline-none focus:border-kiru-forest"
+                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-kiru-muted uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                   Usuario
                 </label>
                 <input
@@ -202,12 +192,12 @@ export default function AdminPage() {
                   placeholder="Ej: lucia"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full p-3 rounded-2xl border border-kiru-border bg-[#F7F6F3] text-xs font-medium text-kiru-text focus:outline-none focus:border-kiru-forest"
+                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-kiru-muted uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                   Contraseña
                 </label>
                 <input
@@ -215,18 +205,18 @@ export default function AdminPage() {
                   placeholder="Ej: lucia123"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 rounded-2xl border border-kiru-border bg-[#F7F6F3] text-xs font-medium text-kiru-text focus:outline-none focus:border-kiru-forest"
+                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-kiru-muted uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                   Tipo de usuario / Rol
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as any)}
-                  className="w-full p-3 rounded-2xl border border-kiru-border bg-[#F7F6F3] text-xs font-semibold text-kiru-text focus:outline-none focus:border-kiru-forest"
+                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
                 >
                   <option value="alumno">Alumno</option>
                   <option value="mentor">Mentor</option>
@@ -237,19 +227,19 @@ export default function AdminPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-kiru-forest text-white text-xs font-semibold rounded-2xl hover:bg-kiru-forest-hover transition-colors shadow-xs flex items-center justify-center gap-2 mt-2"
+                className="w-full py-3 bg-slate-900 text-white text-xs font-semibold rounded-2xl hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2"
               >
                 <UserPlus className="w-4 h-4" /> Registrar Usuario
               </button>
             </form>
           </div>
 
-          {/* COLUMNA 2 & 3: Lista de usuarios registrados (Ver, Editar, Eliminar) */}
-          <div className="lg:col-span-2 bg-kiru-card rounded-3xl p-6 border border-kiru-border shadow-sm space-y-4">
+          {/* COLUMNA 2 & 3: Lista de usuarios registrados */}
+          <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-serif text-lg text-kiru-text">Usuarios registrados ({users.length})</h2>
-                <p className="text-xs text-kiru-muted mt-0.5">
+                <h2 className="font-serif text-lg text-slate-900">Usuarios registrados ({users.length})</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
                   Visualiza, edita o elimina las cuentas del sistema.
                 </p>
               </div>
@@ -258,19 +248,19 @@ export default function AdminPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-kiru-border text-kiru-muted uppercase tracking-wider font-semibold">
+                  <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
                     <th className="pb-3 pl-2">Nombre / Usuario</th>
                     <th className="pb-3">Rol</th>
                     <th className="pb-3">Contraseña</th>
                     <th className="pb-3 text-right pr-2">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-kiru-border/60 text-kiru-text">
+                <tbody className="divide-y divide-slate-100 text-slate-900">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-[#F7F6F3]/60 transition-colors">
+                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-3.5 pl-2">
-                        <p className="font-bold text-kiru-text">{user.name}</p>
-                        <p className="text-[11px] text-kiru-muted font-mono">@{user.username}</p>
+                        <p className="font-bold text-slate-900">{user.name}</p>
+                        <p className="text-[11px] text-slate-400 font-mono">@{user.username}</p>
                       </td>
                       <td className="py-3.5">
                         <span
@@ -278,6 +268,7 @@ export default function AdminPage() {
                             user.role === "admin"
                               ? "bg-purple-100 text-purple-700"
                               : user.role === "mentor"
+                              ? "bg-blue-100 text-blue-700"
                               : user.role === "padre"
                               ? "bg-amber-100 text-amber-700"
                               : "bg-emerald-100 text-emerald-700"
@@ -286,14 +277,14 @@ export default function AdminPage() {
                           {user.role}
                         </span>
                       </td>
-                      <td className="py-3.5 font-mono text-[11px] text-kiru-muted">
+                      <td className="py-3.5 font-mono text-[11px] text-slate-500">
                         {user.password || "••••••••"}
                       </td>
                       <td className="py-3.5 text-right pr-2">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setEditingUser(user)}
-                            className="p-2 rounded-xl border border-kiru-border bg-[#F7F6F3] hover:bg-kiru-forest hover:text-white hover:border-kiru-forest text-kiru-muted transition-all"
+                            className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-slate-900 hover:text-white hover:border-slate-900 text-slate-500 transition-all"
                             title="Editar usuario"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -301,7 +292,7 @@ export default function AdminPage() {
 
                           <button
                             onClick={() => handleDeleteUser(user.id, user.username)}
-                            className="p-2 rounded-xl border border-kiru-border bg-[#F7F6F3] hover:bg-red-500 hover:text-white hover:border-red-500 text-kiru-muted transition-all"
+                            className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-rose-600 hover:text-white hover:border-rose-600 text-slate-500 transition-all"
                             title="Eliminar usuario"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -317,18 +308,18 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* Modal para Editar / Cambiar Usuario */}
+      {/* Modal para Editar */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 border border-kiru-border max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-kiru-border pb-3">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-kiru-forest" />
-                <h3 className="font-serif text-lg text-kiru-text">Editar Usuario</h3>
+                <Edit3 className="w-4 h-4 text-emerald-800" />
+                <h3 className="font-serif text-lg text-slate-900">Editar Usuario</h3>
               </div>
               <button
                 onClick={() => setEditingUser(null)}
-                className="text-kiru-muted hover:text-kiru-text"
+                className="text-slate-400 hover:text-slate-700"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -336,49 +327,49 @@ export default function AdminPage() {
 
             <form onSubmit={handleUpdateUser} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-bold text-kiru-muted uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                   Nombre completo
                 </label>
                 <input
                   type="text"
                   value={editingUser.name}
                   onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
-                  className="w-full p-3 rounded-2xl border border-kiru-border bg-[#F7F6F3] text-xs font-medium text-kiru-text focus:outline-none focus:border-kiru-forest"
+                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-kiru-muted uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                   Usuario
                 </label>
                 <input
                   type="text"
                   value={editingUser.username}
                   onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
-                  className="w-full p-3 rounded-2xl border border-kiru-border bg-[#F7F6F3] text-xs font-medium text-kiru-text focus:outline-none focus:border-kiru-forest"
+                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-kiru-muted uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                   Contraseña
                 </label>
                 <input
                   type="text"
                   value={editingUser.password || ""}
                   onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
-                  className="w-full p-3 rounded-2xl border border-kiru-border bg-[#F7F6F3] text-xs font-medium text-kiru-text focus:outline-none focus:border-kiru-forest"
+                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-kiru-muted uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
                   Rol asignado
                 </label>
                 <select
                   value={editingUser.role}
                   onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
-                  className="w-full p-3 rounded-2xl border border-kiru-border bg-[#F7F6F3] text-xs font-semibold text-kiru-text focus:outline-none focus:border-kiru-forest"
+                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
                 >
                   <option value="alumno">Alumno</option>
                   <option value="mentor">Mentor</option>
@@ -391,13 +382,13 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-kiru-border text-xs font-semibold text-kiru-muted hover:bg-[#F7F6F3] transition-colors"
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-kiru-forest text-white text-xs font-semibold hover:bg-kiru-forest-hover transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                  className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
                 >
                   <Save className="w-3.5 h-3.5" /> Guardar cambios
                 </button>
