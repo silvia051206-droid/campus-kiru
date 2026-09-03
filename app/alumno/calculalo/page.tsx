@@ -44,7 +44,7 @@ export default function CalculaloPage() {
           </Link>
         </div>
 
-        {/* Sección Calcúlalo con instrucciones y enlace directo visible */}
+        {/* Sección Calcúlalo exacta sin el texto extra */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
           <h2 className="text-2xl font-serif text-[#0F172A] mb-4">Calcúlalo</h2>
 
@@ -57,30 +57,14 @@ export default function CalculaloPage() {
             </ol>
           </div>
 
-          <div className="space-y-3">
-            {/* Botón oficial con enlace */}
-            <a
-              href="https://calculalo.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-sm"
-            >
-              Acceder a Calcúlalo
-            </a>
-
-            {/* Enlace visible en texto */}
-            <p className="text-xs text-slate-500">
-              Enlace directo:{' '}
-              <a
-                href="https://calculalo.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-indigo-600 font-semibold underline hover:text-indigo-800"
-              >
-                https://calculalo.app/
-              </a>
-            </p>
-          </div>
+          <a
+            href="https://calculalo.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-sm"
+          >
+            Acceder a Calcúlalo
+          </a>
         </div>
 
       </div>
