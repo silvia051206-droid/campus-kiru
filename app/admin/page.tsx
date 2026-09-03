@@ -126,7 +126,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] pb-16 font-sans">
-      {/* Cabecera con botón de apagado en negro */}
+      {/* Cabecera con botón de apagado en negro (Opción A) */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-6 h-6 text-emerald-800" />
@@ -138,9 +138,9 @@ export default function AdminPage() {
         <Link 
           href="/" 
           title="Cerrar sesión"
-          className="p-2 sm:p-2.5 rounded-xl border border-slate-900 bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center shadow-sm"
+          className="p-2 sm:p-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-center shadow-sm"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-slate-900">
             <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
             <line x1="12" y1="2" x2="12" y2="12" />
           </svg>
@@ -163,14 +163,14 @@ export default function AdminPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Formulario */}
+          {/* Formulario Crear Usuario */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4 h-fit">
             <div className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-emerald-800" />
               <h2 className="font-serif text-lg text-slate-900">Crear nuevo usuario</h2>
             </div>
             <p className="text-xs text-slate-500">
-              Registra nuevos alumnos, mentores o tutores legales.
+              Registra nuevos alumnos, mentores o tutores legales[cite: 1].
             </p>
 
             <form onSubmit={handleCreateUser} className="space-y-3 pt-2">
@@ -238,12 +238,12 @@ export default function AdminPage() {
             </form>
           </div>
 
-          {/* Tabla */}
+          {/* Tabla de Usuarios Registrados */}
           <div className="lg:col-span-2 bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
             <div>
               <h2 className="font-serif text-lg text-slate-900">Usuarios registrados ({users.length})</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Visualiza, edita o elimina las cuentas del sistema.
+                Visualiza, edita o elimina las cuentas del sistema[cite: 1].
               </p>
             </div>
 
@@ -270,6 +270,7 @@ export default function AdminPage() {
                             user.role === "admin"
                               ? "bg-purple-100 text-purple-700"
                               : user.role === "mentor"
+                              ? "bg-blue-100 text-blue-700"
                               : user.role === "padre"
                               ? "bg-amber-100 text-amber-700"
                               : "bg-emerald-100 text-emerald-700"
@@ -309,7 +310,7 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* Modal Editar */}
+      {/* Modal Editar Usuario */}
       {editingUser && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 border border-slate-200 max-w-md w-full shadow-2xl space-y-4">
