@@ -145,7 +145,10 @@ export default function AdminPage() {
             <p className="text-xs text-kiru-muted">Gestión general de cuentas y permisos</p>
           </div>
         </div>
-        <Link href="/" className="text-xs font-semibold text-red-500 hover:underline">
+        <Link 
+          href="/" 
+          className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
+        >
           Cerrar sesión
         </Link>
       </header>
@@ -275,7 +278,6 @@ export default function AdminPage() {
                             user.role === "admin"
                               ? "bg-purple-100 text-purple-700"
                               : user.role === "mentor"
-                              ? "bg-blue-100 text-blue-700"
                               : user.role === "padre"
                               ? "bg-amber-100 text-amber-700"
                               : "bg-emerald-100 text-emerald-700"
