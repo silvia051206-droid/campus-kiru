@@ -8,7 +8,9 @@ import {
   Edit3, 
   ShieldCheck, 
   X,
-  Save
+  Save,
+  Link2,
+  CheckCircle2
 } from "lucide-react";
 
 interface UserAccount {
@@ -20,6 +22,11 @@ interface UserAccount {
   createdAt: string;
 }
 
+interface MentorStudentLink {
+  studentUsername: string;
+  mentorUsername: string;
+}
+
 const DEFAULT_USERS: UserAccount[] = [
   { id: "1", name: "Carmen Fernández", username: "carmen", password: "carmen123", role: "alumno", createdAt: "2026-08-20" },
   { id: "2", name: "Tutor Principal", username: "mentor", password: "mentor123", role: "mentor", createdAt: "2026-08-20" },
@@ -27,14 +34,23 @@ const DEFAULT_USERS: UserAccount[] = [
   { id: "4", name: "Administrador General", username: "admin", password: "admin123", role: "admin", createdAt: "2026-08-20" },
 ];
 
+const DEFAULT_LINKS: MentorStudentLink[] = [
+  { studentUsername: "carmen", mentorUsername: "mentor" }
+];
+
 export default function AdminPage() {
   const [users, setUsers] = useState<UserAccount[]>(DEFAULT_USERS);
+  const [links, setLinks] = useState<MentorStudentLink[]>(DEFAULT_LINKS);
   
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"alumno" | "mentor" | "padre" | "admin">("alumno");
   
+  // Estados para la vinculación Mentor <-> Alumno
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [selectedMentor, setSelectedMentor] = useState("");
+
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
   const [msg, setMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -47,11 +63,25 @@ export default function AdminPage() {
         console.error(e);
       }
     }
+
+    const savedLinks = localStorage.getItem("kiru_mentor_links");
+    if (savedLinks) {
+      try {
+        setLinks(JSON.parse(savedLinks));
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, []);
 
   const saveToStorage = (updatedUsers: UserAccount[]) => {
     setUsers(updatedUsers);
     localStorage.setItem("kiru_custom_users", JSON.stringify(updatedUsers));
+  };
+
+  const saveLinksToStorage = (updatedLinks: MentorStudentLink[]) => {
+    setLinks(updatedLinks);
+    localStorage.setItem("kiru_mentor_links", JSON.stringify(updatedLinks));
   };
 
   const handleCreateUser = (e: React.FormEvent) => {
@@ -103,9 +133,20 @@ export default function AdminPage() {
       return;
     }
 
+    const oldUsername = users.find(u => u.id === editingUser.id)?.username;
     const updated = users.map((u) =>
       u.id === editingUser.id ? { ...editingUser, username: cleanUsername } : u
     );
+
+    // Actualizar también en los enlaces si cambió el nombre de usuario
+    if (oldUsername && oldUsername !== cleanUsername) {
+      const updatedLinks = links.map(l => {
+        if (l.studentUsername === oldUsername) return { ...l, studentUsername: cleanUsername };
+        if (l.mentorUsername === oldUsername) return { ...l, mentorUsername: cleanUsername };
+        return l;
+      });
+      saveLinksToStorage(updatedLinks);
+    }
 
     saveToStorage(updated);
     setEditingUser(null);
@@ -120,9 +161,46 @@ export default function AdminPage() {
     }
     const updated = users.filter((u) => u.id !== id);
     saveToStorage(updated);
+
+    // Eliminar también las vinculaciones existentes para este usuario
+    const updatedLinks = links.filter(
+      l => l.studentUsername !== userToDelete && l.mentorUsername !== userToDelete
+    );
+    saveLinksToStorage(updatedLinks);
+
     setMsg({ text: `Usuario «${userToDelete}» eliminado.`, type: "success" });
     setTimeout(() => setMsg(null), 4000);
   };
+
+  // Función para asignar mentor a alumno
+  const handleAssignMentor = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudent || !selectedMentor) {
+      setMsg({ text: "Selecciona tanto un alumno como un mentor.", type: "error" });
+      return;
+    }
+
+    const filtered = links.filter(l => l.studentUsername !== selectedStudent);
+    const updatedLinks = [...filtered, { studentUsername: selectedStudent, mentorUsername: selectedMentor }];
+    saveLinksToStorage(updatedLinks);
+
+    setMsg({ 
+      text: `Vinculación guardada: @${selectedStudent} asignado/a a @${selectedMentor}.`, 
+      type: "success" 
+    });
+    setTimeout(() => setMsg(null), 4000);
+  };
+
+  // Función para desvincular
+  const handleRemoveLink = (studentUsername: string) => {
+    const updatedLinks = links.filter(l => l.studentUsername !== studentUsername);
+    saveLinksToStorage(updatedLinks);
+    setMsg({ text: `Se ha retirado la vinculación para @${studentUsername}.`, type: "success" });
+    setTimeout(() => setMsg(null), 4000);
+  };
+
+  const alumnos = users.filter(u => u.role === "alumno");
+  const mentores = users.filter(u => u.role === "mentor");
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] pb-16 font-sans">
@@ -163,79 +241,142 @@ export default function AdminPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Formulario Crear Usuario */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4 h-fit">
-            <div className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-emerald-800" />
-              <h2 className="font-serif text-lg text-slate-900">Crear nuevo usuario</h2>
-            </div>
-            <p className="text-xs text-slate-500">
-              Registra nuevos alumnos, mentores o tutores legales[cite: 1].
-            </p>
-
-            <form onSubmit={handleCreateUser} className="space-y-3 pt-2">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Nombre completo
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: Lucía Navarro"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                />
+          
+          {/* Columna Izquierda: Formularios */}
+          <div className="space-y-6">
+            
+            {/* Formulario Crear Usuario */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-emerald-800" />
+                <h2 className="font-serif text-lg text-slate-900">Crear nuevo usuario</h2>
               </div>
+              <p className="text-xs text-slate-500">
+                Registra nuevos alumnos, mentores o tutores legales.
+              </p>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Usuario
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: lucia"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                />
-              </div>
+              <form onSubmit={handleCreateUser} className="space-y-3 pt-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Nombre completo
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Lucía Navarro"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Contraseña
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: lucia123"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Usuario
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: lucia"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Tipo de usuario / Rol
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as any)}
-                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Contraseña
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: lucia123"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Tipo de usuario / Rol
+                  </label>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as any)}
+                    className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
+                  >
+                    <option value="alumno">Alumno</option>
+                    <option value="mentor">Mentor</option>
+                    <option value="padre">Padre / Madre</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-slate-900 text-white text-xs font-semibold rounded-2xl hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2"
                 >
-                  <option value="alumno">Alumno</option>
-                  <option value="mentor">Mentor</option>
-                  <option value="padre">Padre / Madre</option>
-                  <option value="admin">Administrador</option>
-                </select>
-              </div>
+                  <UserPlus className="w-4 h-4" /> Registrar Usuario
+                </button>
+              </form>
+            </div>
 
-              <button
-                type="submit"
-                className="w-full py-3 bg-slate-900 text-white text-xs font-semibold rounded-2xl hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2"
-              >
-                <UserPlus className="w-4 h-4" /> Registrar Usuario
-              </button>
-            </form>
+            {/* Tarjeta Enlazar Alumno con Mentor */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-5 h-5 text-blue-600" />
+                <h2 className="font-serif text-lg text-slate-900">Enlazar Mentor y Alumno</h2>
+              </div>
+              <p className="text-xs text-slate-500">
+                Asigna a cada alumno su mentor correspondiente.
+              </p>
+
+              <form onSubmit={handleAssignMentor} className="space-y-3 pt-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Seleccionar Alumno
+                  </label>
+                  <select
+                    value={selectedStudent}
+                    onChange={(e) => setSelectedStudent(e.target.value)}
+                    className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
+                  >
+                    <option value="">-- Elige un alumno --</option>
+                    {alumnos.map((a) => (
+                      <option key={a.id} value={a.username}>
+                        {a.name} (@{a.username})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Seleccionar Mentor
+                  </label>
+                  <select
+                    value={selectedMentor}
+                    onChange={(e) => setSelectedMentor(e.target.value)}
+                    className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
+                  >
+                    <option value="">-- Elige un mentor --</option>
+                    {mentores.map((m) => (
+                      <option key={m.id} value={m.username}>
+                        {m.name} (@{m.username})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!selectedStudent || !selectedMentor}
+                  className="w-full py-3 bg-blue-700 text-white text-xs font-semibold rounded-2xl hover:bg-blue-800 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2 disabled:opacity-40"
+                >
+                  <Link2 className="w-4 h-4" /> Asignar Mentor
+                </button>
+              </form>
+            </div>
+
           </div>
 
           {/* Tabla de Usuarios Registrados */}
@@ -243,7 +384,7 @@ export default function AdminPage() {
             <div>
               <h2 className="font-serif text-lg text-slate-900">Usuarios registrados ({users.length})</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Visualiza, edita o elimina las cuentas del sistema[cite: 1].
+                Visualiza, edita o elimina las cuentas del sistema.
               </p>
             </div>
 
@@ -253,56 +394,84 @@ export default function AdminPage() {
                   <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
                     <th className="pb-3 pl-2">Nombre / Usuario</th>
                     <th className="pb-3">Rol</th>
+                    <th className="pb-3">Mentor Asignado</th>
                     <th className="pb-3">Contraseña</th>
                     <th className="pb-3 text-right pr-2">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-900">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3.5 pl-2">
-                        <p className="font-bold text-slate-900">{user.name}</p>
-                        <p className="text-[11px] text-slate-400 font-mono">@{user.username}</p>
-                      </td>
-                      <td className="py-3.5">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase ${
-                            user.role === "admin"
-                              ? "bg-purple-100 text-purple-700"
-                              : user.role === "mentor"
-                              ? "bg-blue-100 text-blue-700"
-                              : user.role === "padre"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="py-3.5 font-mono text-[11px] text-slate-500">
-                        {user.password || "••••••••"}
-                      </td>
-                      <td className="py-3.5 text-right pr-2">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => setEditingUser(user)}
-                            className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-slate-900 hover:text-white hover:border-slate-900 text-slate-500 transition-all"
-                            title="Editar usuario"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
+                  {users.map((user) => {
+                    const mentorLink = links.find(l => l.studentUsername === user.username);
+                    const mentorObj = mentorLink ? users.find(u => u.username === mentorLink.mentorUsername) : null;
 
-                          <button
-                            onClick={() => handleDeleteUser(user.id, user.username)}
-                            className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-rose-600 hover:text-white hover:border-rose-600 text-slate-500 transition-all"
-                            title="Eliminar usuario"
+                    return (
+                      <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3.5 pl-2">
+                          <p className="font-bold text-slate-900">{user.name}</p>
+                          <p className="text-[11px] text-slate-400 font-mono">@{user.username}</p>
+                        </td>
+                        <td className="py-3.5">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase ${
+                              user.role === "admin"
+                                ? "bg-purple-100 text-purple-700"
+                                : user.role === "mentor"
+                                ? "bg-blue-100 text-blue-700"
+                                : user.role === "padre"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-emerald-100 text-emerald-700"
+                            }`}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="py-3.5">
+                          {user.role === "alumno" ? (
+                            mentorLink ? (
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 text-[11px] font-medium border border-blue-200">
+                                <CheckCircle2 className="w-3 h-3 text-blue-600" />
+                                <span>{mentorObj ? mentorObj.name : `@${mentorLink.mentorUsername}`}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveLink(user.username)}
+                                  className="ml-1 text-blue-400 hover:text-rose-600 font-bold"
+                                  title="Quitar mentor"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">Sin mentor</span>
+                            )
+                          ) : (
+                            <span className="text-[11px] text-slate-300">—</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 font-mono text-[11px] text-slate-500">
+                          {user.password || "••••••••"}
+                        </td>
+                        <td className="py-3.5 text-right pr-2">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setEditingUser(user)}
+                              className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-slate-900 hover:text-white hover:border-slate-900 text-slate-500 transition-all"
+                              title="Editar usuario"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.username)}
+                              className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-rose-600 hover:text-white hover:border-rose-600 text-slate-500 transition-all"
+                              title="Eliminar usuario"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
