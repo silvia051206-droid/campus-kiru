@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Student {
@@ -12,6 +12,20 @@ interface Student {
   avatarText: string;
   linkedParent?: string;
 }
+
+interface UserAccount {
+  id: string;
+  name: string;
+  username: string;
+  role: "alumno" | "mentor" | "padre" | "admin";
+}
+
+const DEFAULT_USERS: UserAccount[] = [
+  { id: "1", name: "Carmen Fernández", username: "carmen", role: "alumno" },
+  { id: "2", name: "Tutor Principal", username: "mentor", role: "mentor" },
+  { id: "3", name: "Familia Fernández", username: "familia", role: "padre" },
+  { id: "4", name: "Administrador General", username: "admin", role: "admin" },
+];
 
 const initialStudents: Student[] = [
   {
@@ -34,7 +48,23 @@ export default function MentorPage() {
   >('inicio');
 
   const [parentUsername, setParentUsername] = useState('');
+  const [familyUsers, setFamilyUsers] = useState<UserAccount[]>([]);
   const [linkSuccess, setLinkSuccess] = useState(false);
+
+  // Cargar usuarios con rol padre/madre registrados en el sistema
+  useEffect(() => {
+    let allUsers = DEFAULT_USERS;
+    const savedUsers = localStorage.getItem("kiru_custom_users");
+    if (savedUsers) {
+      try {
+        allUsers = JSON.parse(savedUsers);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    const padres = allUsers.filter(u => u.role === "padre");
+    setFamilyUsers(padres);
+  }, []);
 
   const handleLinkParent = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,26 +223,38 @@ export default function MentorPage() {
                     </div>
                   </div>
 
+                  {/* VINCULAR FAMILIA CON DESPLEGABLE */}
                   <div className="pt-6 border-t border-slate-100">
                     <h3 className="text-base font-serif text-slate-900 mb-1">Vincular Familia</h3>
+                    <p className="text-xs text-slate-500 mb-3">
+                      Selecciona la cuenta de padre o tutor legal registrada para asignarla a {selectedStudent.name}.
+                    </p>
                     <form onSubmit={handleLinkParent} className="flex flex-col sm:flex-row gap-3 max-w-md">
-                      <input
-                        type="text"
+                      <select
                         value={parentUsername}
                         onChange={(e) => setParentUsername(e.target.value)}
-                        placeholder="Usuario de la familia"
-                        className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800"
+                        className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:border-slate-800"
                         required
-                      />
+                      >
+                        <option value="">-- Selecciona un padre / tutor --</option>
+                        {familyUsers.map((fam) => (
+                          <option key={fam.id} value={fam.username}>
+                            {fam.name} (@{fam.username})
+                          </option>
+                        ))}
+                      </select>
                       <button
                         type="submit"
-                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+                        disabled={!parentUsername}
+                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition disabled:opacity-40"
                       >
-                        Vincular
+                        Asignar
                       </button>
                     </form>
                     {linkSuccess && (
-                      <p className="text-xs text-emerald-600 font-semibold mt-2">Familia vinculada.</p>
+                      <p className="text-xs text-emerald-600 font-semibold mt-2">
+                        Familia @{parentUsername} vinculada con éxito.
+                      </p>
                     )}
                   </div>
                 </div>
