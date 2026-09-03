@@ -11,6 +11,7 @@ interface Student {
   skillCoins: number;
   avatarText: string;
   linkedParent?: string;
+  parentLinked?: string[];
 }
 
 interface UserAccount {
@@ -29,13 +30,14 @@ const DEFAULT_USERS: UserAccount[] = [
 
 const initialStudents: Student[] = [
   {
-    id: '1',
+    id: 'carmen',
     name: 'Carmen Fernández',
     level: 'Explorador',
     lastAccess: 'Hoy 11:50',
     skillCoins: 19,
     avatarText: 'CF',
-    linkedParent: 'familia'
+    linkedParent: 'familia',
+    parentLinked: ['familia']
   }
 ];
 
@@ -51,8 +53,9 @@ export default function MentorPage() {
   const [familyUsers, setFamilyUsers] = useState<UserAccount[]>([]);
   const [linkSuccess, setLinkSuccess] = useState(false);
 
-  // Cargar usuarios con rol padre/madre registrados en el sistema
+  // 1. Cargar alumnos persistidos y padres registrados
   useEffect(() => {
+    // Cargar padres registrados
     let allUsers = DEFAULT_USERS;
     const savedUsers = localStorage.getItem("kiru_custom_users");
     if (savedUsers) {
@@ -64,18 +67,44 @@ export default function MentorPage() {
     }
     const padres = allUsers.filter(u => u.role === "padre");
     setFamilyUsers(padres);
+
+    // Cargar estado persistido de los alumnos y sus vinculaciones
+    const savedStudents = localStorage.getItem("kiru_students_links");
+    if (savedStudents) {
+      try {
+        setStudents(JSON.parse(savedStudents));
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, []);
 
+  // 2. Guardar vinculación persistente
   const handleLinkParent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !parentUsername) return;
 
-    setStudents(prev =>
-      prev.map(s =>
-        s.id === selectedStudent.id ? { ...s, linkedParent: parentUsername } : s
-      )
-    );
-    setSelectedStudent(prev => prev ? { ...prev, linkedParent: parentUsername } : null);
+    const updatedStudents = students.map(s => {
+      if (s.id === selectedStudent.id) {
+        return { 
+          ...s, 
+          linkedParent: parentUsername,
+          parentLinked: [parentUsername]
+        };
+      }
+      return s;
+    });
+
+    setStudents(updatedStudents);
+    setSelectedStudent(prev => prev ? { 
+      ...prev, 
+      linkedParent: parentUsername,
+      parentLinked: [parentUsername]
+    } : null);
+
+    // Guardado permanente en localStorage para que el panel padre/madre lo reconozca
+    localStorage.setItem("kiru_students_links", JSON.stringify(updatedStudents));
+
     setLinkSuccess(true);
     setTimeout(() => setLinkSuccess(false), 3000);
   };
@@ -223,7 +252,7 @@ export default function MentorPage() {
                     </div>
                   </div>
 
-                  {/* VINCULAR FAMILIA CON DESPLEGABLE */}
+                  {/* VINCULAR FAMILIA CON DESPLEGABLE Y PERSISTENCIA */}
                   <div className="pt-6 border-t border-slate-100">
                     <h3 className="text-base font-serif text-slate-900 mb-1">Vincular Familia</h3>
                     <p className="text-xs text-slate-500 mb-3">
@@ -236,7 +265,7 @@ export default function MentorPage() {
                         className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:border-slate-800"
                         required
                       >
-                        <option value="">-- Selecciona un padre / tutor --</option>
+                        <option value="">-- Elige la cuenta de padre/madre --</option>
                         {familyUsers.map((fam) => (
                           <option key={fam.id} value={fam.username}>
                             {fam.name} (@{fam.username})
@@ -253,7 +282,7 @@ export default function MentorPage() {
                     </form>
                     {linkSuccess && (
                       <p className="text-xs text-emerald-600 font-semibold mt-2">
-                        Familia @{parentUsername} vinculada con éxito.
+                        ✓ Vinculación guardada correctamente con @{parentUsername}.
                       </p>
                     )}
                   </div>
@@ -329,7 +358,6 @@ export default function MentorPage() {
                 </div>
               )}
 
-              {/* PESTAÑA MEHMIRO CON H */}
               {activeTab === 'mehmiro' && (
                 <div>
                   <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Mehmiro</h2>
