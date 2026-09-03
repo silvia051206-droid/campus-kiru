@@ -58,7 +58,7 @@ export default function MentorPage() {
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans p-8">
       <div className="max-w-5xl mx-auto">
         
-        {/* BARRA SUPERIOR CON CIERRE DE SESIÓN */}
+        {/* BARRA SUPERIOR CON CIERRE DE SESIÓN EN ROJO */}
         <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
           <div>
             <h1 className="text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
@@ -66,7 +66,7 @@ export default function MentorPage() {
           </div>
           <button
             onClick={handleLogout}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-300 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-slate-50 transition"
+            className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
           >
             Cerrar sesión
           </button>
@@ -206,7 +206,7 @@ export default function MentorPage() {
                       />
                       <button
                         type="submit"
-                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold"
+                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
                       >
                         Vincular
                       </button>
@@ -265,7 +265,7 @@ export default function MentorPage() {
                 </div>
               )}
 
-              {/* CALCÚLALO CON ENLACE DIRECTO A https://calculalo.app/ */}
+              {/* CALCÚLALO CON ENLACE DIRECTO LIMPIO A https://calculalo.app/ */}
               {activeTab === 'calculalo' && (
                 <div>
                   <h2 className="text-2xl font-serif text-slate-900 mb-2">Calcúlalo (Acceso Mentor)</h2>
@@ -273,7 +273,7 @@ export default function MentorPage() {
                     <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones de acceso:</h3>
                     <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
                       <li>Pulsa en el botón «Acceder a Calcúlalo».</li>
-                      <li>Selecciona la opción <strong>«Docente»</strong>[cite: 3].</li>
+                      <li>Selecciona la opción <strong>«Docente»</strong>.</li>
                       <li>Introduce tus claves de tutor.</li>
                     </ol>
                   </div>
@@ -309,12 +309,11 @@ export default function MentorPage() {
                 </div>
               )}
 
+              {/* ASIGNAR INFORME COMPLETAMENTE EN BLANCO SEGÚN SPRINT 1 */}
               {activeTab === 'informe' && (
                 <div>
                   <h2 className="text-2xl font-serif text-slate-900 mb-2">Asignar Informe</h2>
-                  <div className="border border-dashed border-slate-200 rounded-xl p-12 text-center bg-slate-50/30">
-                    <p className="text-xs font-medium text-slate-400">Sección en blanco preparada para futuros sprints[cite: 3].</p>
-                  </div>
+                  <div className="min-h-[220px]" />
                 </div>
               )}
             </div>
