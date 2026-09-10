@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, CheckCircle2, Clock, ChevronRight, ArrowLeft } from "lucide-react";
+import { FileText, CheckCircle2, ChevronRight, ArrowLeft } from "lucide-react";
+import SkillCoinsChart from "@/components/SkillCoinsChart";
 
 interface StudentChild {
   id: string;
@@ -85,7 +86,7 @@ export default function PadrePage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-slate-800 font-sans pb-12">
-      {/* Barra superior móvil */}
+      {/* Barra superior móvil limpia con botón de apagado en negro */}
       <header className="bg-white border-b border-slate-200 px-4 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-2">
           {selectedChild && (
@@ -97,7 +98,7 @@ export default function PadrePage() {
               <ArrowLeft className="w-4 h-4" />
             </button>
           )}
-          <span className="font-serif text-lg text-slate-900">Método Kiru</span>
+          <span className="font-serif text-lg text-slate-900 font-bold">Método Kiru</span>
         </div>
 
         <button
@@ -122,6 +123,7 @@ export default function PadrePage() {
       </header>
 
       <main className="max-w-xl mx-auto px-4 pt-6 space-y-6">
+        {/* PANTALLA 1: LISTADO DE HIJOS */}
         {!selectedChild ? (
           <div className="space-y-4">
             <div>
@@ -154,7 +156,9 @@ export default function PadrePage() {
             </div>
           </div>
         ) : (
+          /* PANTALLA 2: ESPACIO INDIVIDUAL DEL HIJO */
           <div className="space-y-5">
+            {/* Cabecera del hijo */}
             <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Espacio del Alumno</span>
@@ -168,6 +172,7 @@ export default function PadrePage() {
               </button>
             </div>
 
+            {/* Menú de navegación móvil */}
             <div className="flex bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm text-xs font-semibold overflow-x-auto gap-1">
               {[
                 { id: "inicio", label: "Inicio / Avisos" },
@@ -189,6 +194,7 @@ export default function PadrePage() {
               ))}
             </div>
 
+            {/* TAB INICIO: AVISOS */}
             {activeTab === "inicio" && (
               <div className="space-y-4">
                 <h3 className="text-base font-serif text-slate-900">Comunicaciones y Avisos</h3>
@@ -206,16 +212,14 @@ export default function PadrePage() {
               </div>
             )}
 
+            {/* TAB PROGRESO: GRÁFICAS DE SKILLCOINS */}
             {activeTab === "progreso" && (
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 text-center space-y-2 shadow-sm">
-                <Clock className="w-6 h-6 text-slate-400 mx-auto" />
-                <h4 className="font-serif text-base text-slate-800">Seguimiento y evolución</h4>
-                <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                  Esta sección mostrará los informes periódicos y las gráficas por categoría.
-                </p>
+              <div className="space-y-4">
+                <SkillCoinsChart />
               </div>
             )}
 
+            {/* TAB DOCUMENTOS */}
             {activeTab === "documentos" && (
               <div className="space-y-4">
                 <h3 className="text-base font-serif text-slate-900">Documentación de {selectedChild.name}</h3>
@@ -257,6 +261,7 @@ export default function PadrePage() {
               </div>
             )}
 
+            {/* TAB PAGOS */}
             {activeTab === "pagos" && (
               <div className="space-y-5">
                 <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
