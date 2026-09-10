@@ -1,394 +1,507 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-interface Student {
-  id: string;
-  name: string;
-  level: string;
-  lastAccess: string;
-  skillCoins: number;
-  avatarText: string;
-  linkedParent?: string;
-  parentLinked?: string[];
-}
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { 
+  Users, 
+  Layers, 
+  BookOpen, 
+  TrendingUp, 
+  Plus, 
+  Send, 
+  ExternalLink, 
+  Save, 
+  CheckCircle2, 
+  X 
+} from "lucide-react";
 
 interface UserAccount {
   id: string;
   name: string;
   username: string;
-  role: "alumno" | "mentor" | "padre" | "admin";
+  role: string;
 }
 
-const DEFAULT_USERS: UserAccount[] = [
-  { id: "1", name: "Carmen Fernández", username: "carmen", role: "alumno" },
-  { id: "2", name: "Tutor Principal", username: "mentor", role: "mentor" },
-  { id: "3", name: "Familia Fernández", username: "familia", role: "padre" },
-  { id: "4", name: "Administrador General", username: "admin", role: "admin" },
-];
-
-const initialStudents: Student[] = [
-  {
-    id: 'carmen',
-    name: 'Carmen Fernández',
-    level: 'Explorador',
-    lastAccess: 'Hoy 11:50',
-    skillCoins: 19,
-    avatarText: 'CF',
-    linkedParent: 'familia',
-    parentLinked: ['familia']
-  }
-];
+interface Flashcard {
+  id: string;
+  term: string;
+  definition: string;
+  category: string;
+  targetStudents: string[]; // usernames o "todos"
+}
 
 export default function MentorPage() {
   const router = useRouter();
-  const [students, setStudents] = useState<Student[]>(initialStudents);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    'inicio' | 'estadisticas' | 'asignar' | 'calculalo' | 'mehmiro' | 'informe'
-  >('inicio');
+  const [activeTab, setActiveTab] = useState<"mehmiro" | "flashcards" | "asignaturas" | "estadisticas">("mehmiro");
 
-  const [parentUsername, setParentUsername] = useState('');
-  const [familyUsers, setFamilyUsers] = useState<UserAccount[]>([]);
-  const [linkSuccess, setLinkSuccess] = useState(false);
+  const [students, setStudents] = useState<UserAccount[]>([
+    { id: "1", name: "Carmen Fernández", username: "carmen", role: "alumno" }
+  ]);
+  const [selectedStudent, setSelectedStudent] = useState<string>("carmen");
 
-  // 1. Cargar alumnos persistidos y padres registrados
+  // Notificación
+  const [msg, setMsg] = useState<string | null>(null);
+
+  // Estados Flashcards
+  const [cards, setCards] = useState<Flashcard[]>([]);
+  const [cardTerm, setCardTerm] = useState("");
+  const [cardDef, setCardDef] = useState("");
+  const [cardCategory, setCardCategory] = useState("Geografía");
+  const [selectedTargets, setSelectedTargets] = useState<string[]>(["carmen"]);
+
+  // Estados Asignaturas
+  const [subjectId, setSubjectId] = useState("geo");
+  const [subjectNote, setSubjectNote] = useState("");
+  const [subjectLink, setSubjectLink] = useState("");
+
+  // Cargar datos
   useEffect(() => {
-    // Cargar padres registrados
-    let allUsers = DEFAULT_USERS;
-    const savedUsers = localStorage.getItem("kiru_custom_users");
-    if (savedUsers) {
+    const customUsers = localStorage.getItem("kiru_custom_users");
+    if (customUsers) {
       try {
-        allUsers = JSON.parse(savedUsers);
+        const parsed: UserAccount[] = JSON.parse(customUsers);
+        const onlyStudents = parsed.filter((u) => u.role === "alumno");
+        if (onlyStudents.length > 0) {
+          setStudents(onlyStudents);
+          setSelectedStudent(onlyStudents[0].username);
+        }
       } catch (e) {
         console.error(e);
       }
     }
-    const padres = allUsers.filter(u => u.role === "padre");
-    setFamilyUsers(padres);
 
-    // Cargar estado persistido de los alumnos y sus vinculaciones
-    const savedStudents = localStorage.getItem("kiru_students_links");
-    if (savedStudents) {
+    const savedCards = localStorage.getItem("kiru_custom_flashcards");
+    if (savedCards) {
       try {
-        setStudents(JSON.parse(savedStudents));
+        setCards(JSON.parse(savedCards));
       } catch (e) {
         console.error(e);
       }
     }
   }, []);
 
-  // 2. Guardar vinculación persistente
-  const handleLinkParent = (e: React.FormEvent) => {
+  // Guardar y enviar Flashcard
+  const handleCreateFlashcard = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedStudent || !parentUsername) return;
+    if (!cardTerm.trim() || !cardDef.trim() || selectedTargets.length === 0) return;
 
-    const updatedStudents = students.map(s => {
-      if (s.id === selectedStudent.id) {
-        return { 
-          ...s, 
-          linkedParent: parentUsername,
-          parentLinked: [parentUsername]
-        };
-      }
-      return s;
-    });
+    const newCard: Flashcard = {
+      id: Date.now().toString(),
+      term: cardTerm.trim(),
+      definition: cardDef.trim(),
+      category: cardCategory,
+      targetStudents: selectedTargets,
+    };
 
-    setStudents(updatedStudents);
-    setSelectedStudent(prev => prev ? { 
-      ...prev, 
-      linkedParent: parentUsername,
-      parentLinked: [parentUsername]
-    } : null);
+    const updated = [newCard, ...cards];
+    setCards(updated);
+    localStorage.setItem("kiru_custom_flashcards", JSON.stringify(updated));
 
-    // Guardado permanente en localStorage para que el panel padre/madre lo reconozca
-    localStorage.setItem("kiru_students_links", JSON.stringify(updatedStudents));
+    setCardTerm("");
+    setCardDef("");
+    setMsg("Flashcard creada y asignada con éxito.");
+    setTimeout(() => setMsg(null), 3000);
+  };
 
-    setLinkSuccess(true);
-    setTimeout(() => setLinkSuccess(false), 3000);
+  const toggleStudentSelection = (username: string) => {
+    if (selectedTargets.includes(username)) {
+      setSelectedTargets(selectedTargets.filter((u) => u !== username));
+    } else {
+      setSelectedTargets([...selectedTargets, username]);
+    }
+  };
+
+  // Guardar recurso de Asignatura
+  const handleSaveSubjectResource = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      subjectId,
+      note: subjectNote,
+      link: subjectLink,
+      updatedAt: new Date().toLocaleDateString("es-ES"),
+    };
+    localStorage.setItem(`kiru_resource_${subjectId}_${selectedStudent}`, JSON.stringify(payload));
+    setSubjectNote("");
+    setSubjectLink("");
+    setMsg("Recurso asignado correctamente al alumno.");
+    setTimeout(() => setMsg(null), 3000);
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans px-4 sm:px-6 md:px-10 py-6 md:py-10">
-      <div className="max-w-5xl mx-auto">
-        
-        {/* Cabecera con botón de apagado en negro (Opción A) */}
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-200">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-serif text-[#0F172A]">Campus Método Kiru</h1>
-            <span className="text-xs text-slate-500 font-medium">Panel del Mentor</span>
+    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] pb-16 font-sans">
+      {/* Cabecera con botón de apagado en negro */}
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold">
+            M
           </div>
-          <button
-            onClick={() => router.push('/')}
-            title="Cerrar sesión"
-            className="p-2 sm:p-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-center shadow-sm"
+          <div>
+            <h1 className="font-serif text-xl sm:text-2xl text-slate-900 font-bold">Panel de Mentor</h1>
+            <p className="text-[11px] sm:text-xs text-slate-500">Gestión formativa y seguimiento de alumnos</p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => router.push("/")}
+          title="Cerrar sesión"
+          className="p-2 sm:p-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 transition shadow-sm"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-4 h-4 text-slate-900"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-slate-900">
-              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-              <line x1="12" y1="2" x2="12" y2="12" />
-            </svg>
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+            <line x1="12" y1="2" x2="12" y2="12" />
+          </svg>
+        </button>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Notificación toast */}
+        {msg && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center justify-between shadow-sm">
+            <span>{msg}</span>
+            <button onClick={() => setMsg(null)}><X className="w-4 h-4" /></button>
+          </div>
+        )}
+
+        {/* Barra superior de pestañas del mentor */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-wrap gap-2 shadow-sm text-xs font-semibold w-fit">
+          <button
+            onClick={() => setActiveTab("mehmiro")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "mehmiro" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Mehmiro</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("flashcards")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "flashcards" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Enviar Flashcards</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("asignaturas")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "asignaturas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Asignaturas & Enlaces</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("estadisticas")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "estadisticas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>SkillCoins Semanales</span>
           </button>
         </div>
 
-        {/* LISTA PRINCIPAL DE ALUMNOS */}
-        {!selectedStudent ? (
-          <div>
-            <div className="mb-6">
-              <h2 className="text-2xl sm:text-3xl font-serif text-[#0F172A]">Alumnos asignados</h2>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Selecciona un alumno para revisar su historial o gestionar actividades.
-              </p>
+        {/* PESTAÑA 1: MEHMIRO */}
+        {activeTab === "mehmiro" && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-serif text-slate-900">Alumnos Asignados</h2>
+              <p className="text-xs text-slate-500">Selecciona un alumno para revisar su estado y herramientas activas.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {students.map((student) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {students.map((st) => (
                 <div
-                  key={student.id}
-                  onClick={() => {
-                    setSelectedStudent(student);
-                    setParentUsername(student.linkedParent || '');
-                  }}
-                  className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer flex items-center gap-4 sm:gap-5"
+                  key={st.id}
+                  onClick={() => setSelectedStudent(st.username)}
+                  className={`p-5 rounded-2xl border cursor-pointer transition shadow-sm space-y-2 ${
+                    selectedStudent === st.username
+                      ? "bg-white border-slate-900 ring-2 ring-slate-900/5"
+                      : "bg-white border-slate-200 hover:border-slate-400"
+                  }`}
                 >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-base sm:text-lg font-bold text-slate-600 shrink-0">
-                    {student.avatarText}
-                  </div>
-
-                  <div className="flex-1">
-                    <h3 className="text-lg sm:text-xl font-serif text-slate-900">
-                      {student.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
-                        Nivel: {student.level}
-                      </span>
-                      {student.linkedParent && (
-                        <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">
-                          Familia: @{student.linkedParent}
-                        </span>
-                      )}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#FAF8F5] border border-slate-200 flex items-center justify-center font-bold text-slate-700">
+                      {st.name.substring(0, 2).toUpperCase()}
                     </div>
-                    <p className="text-xs text-slate-400 mt-2">
-                      Último acceso: <span className="text-slate-600 font-medium">{student.lastAccess}</span>
-                    </p>
+                    <div>
+                      <h3 className="font-serif text-sm text-slate-900 font-medium">{st.name}</h3>
+                      <p className="text-[11px] text-slate-400 font-mono">@{st.username}</p>
+                    </div>
+                  </div>
+                  <div className="pt-2 flex justify-between items-center text-[10px] text-slate-500 border-t border-slate-100">
+                    <span>Nivel: Explorador (1)</span>
+                    <span className="text-emerald-700 font-bold">Activo</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        ) : (
-          /* VISTA INDIVIDUAL DEL ALUMNO */
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <button
-                onClick={() => setSelectedStudent(null)}
-                className="text-xs font-semibold text-rose-600 hover:text-rose-700 border border-rose-200 bg-white px-3.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-50 transition"
-              >
-                ← Volver a lista de alumnos
-              </button>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-500">Alumno:</span>
-                <span className="text-base sm:text-lg font-serif text-slate-900">
-                  {selectedStudent.name}
-                </span>
+        )}
+
+        {/* PESTAÑA 2: FLASHCARDS (CREAR Y ENVIAR) */}
+        {activeTab === "flashcards" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Formulario */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-1 h-fit">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-emerald-800" />
+                <h3 className="font-serif text-base text-slate-900">Crear Flashcard</h3>
               </div>
+
+              <form onSubmit={handleCreateFlashcard} className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Materia / Asignatura
+                  </label>
+                  <select
+                    value={cardCategory}
+                    onChange={(e) => setCardCategory(e.target.value)}
+                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
+                  >
+                    <option value="Geografía">Geografía</option>
+                    <option value="Historia">Historia</option>
+                    <option value="Física">Física</option>
+                    <option value="Lengua">Lengua</option>
+                    <option value="Inglés">Inglés</option>
+                    <option value="Química">Química</option>
+                    <option value="Biología">Biología</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Término / Concepto
+                  </label>
+                  <input
+                    type="text"
+                    value={cardTerm}
+                    onChange={(e) => setCardTerm(e.target.value)}
+                    placeholder="Ej: Afluente"
+                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Definición
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={cardDef}
+                    onChange={(e) => setCardDef(e.target.value)}
+                    placeholder="Definición clara y concisa..."
+                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                    Enviar a:
+                  </label>
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto p-2 bg-[#FAF8F5] rounded-xl border border-slate-200 text-xs">
+                    {students.map((st) => (
+                      <label key={st.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedTargets.includes(st.username)}
+                          onChange={() => toggleStudentSelection(st.username)}
+                          className="rounded border-slate-300 text-slate-900 focus:ring-0"
+                        />
+                        <span>{st.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <Send className="w-3.5 h-3.5" /> Crear y Enviar
+                </button>
+              </form>
             </div>
 
-            {/* NAVEGACIÓN SUPERIOR */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm mb-6 p-2">
-              <nav className="flex flex-wrap gap-2">
-                {[
-                  { id: 'inicio', label: 'Inicio' },
-                  { id: 'estadisticas', label: 'Estadísticas' },
-                  { id: 'asignar', label: 'Asignar tarea' },
-                  { id: 'calculalo', label: 'Calcúlalo' },
-                  { id: 'mehmiro', label: 'Mehmiro' },
-                  { id: 'informe', label: 'Asignar informe' },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-semibold transition ${
-                      activeTab === tab.id
-                        ? 'bg-slate-900 text-white shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
+            {/* Listado de tarjetas enviadas */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
+              <h3 className="font-serif text-base text-slate-900">Flashcards Creadas ({cards.length})</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {cards.map((c) => (
+                  <div key={c.id} className="p-4 rounded-2xl border border-slate-100 bg-[#FAF8F5] space-y-2 shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700">
+                        {c.category}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {c.targetStudents.length} alumno(s)
+                      </span>
+                    </div>
+                    <h4 className="font-serif text-sm text-slate-900 font-bold">{c.term}</h4>
+                    <p className="text-xs text-slate-600 leading-relaxed">{c.definition}</p>
+                  </div>
                 ))}
-              </nav>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-8">
-              {activeTab === 'inicio' && (
-                <div className="space-y-8">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Historial de Actividad</h2>
-                    <p className="text-xs text-slate-400 mb-6">Registro cronológico de la interacción del alumno con el campus.</p>
-                    <div className="space-y-4 border-l-2 border-slate-100 ml-3 pl-5">
-                      <div className="relative">
-                        <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                        <p className="text-xs font-bold text-slate-400">Hoy 11:58</p>
-                        <p className="text-sm font-medium text-slate-800 mt-0.5">
-                          Ha terminado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span> con 8/10.
-                        </p>
-                      </div>
-                      <div className="relative">
-                        <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                        <p className="text-xs font-bold text-slate-400">Hoy 11:52</p>
-                        <p className="text-sm font-medium text-slate-800 mt-0.5">
-                          Ha realizado la actividad <span className="font-semibold text-slate-900">“Vocabulary — Unit 1”</span>.
-                        </p>
-                      </div>
-                      <div className="relative">
-                        <span className="absolute -left-[27px] top-1.5 w-3 h-3 rounded-full bg-slate-300 border-2 border-white" />
-                        <p className="text-xs font-bold text-slate-400">Hoy 11:50</p>
-                        <p className="text-sm font-medium text-slate-800 mt-0.5">
-                          El alumno ha accedido al campus.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* VINCULAR FAMILIA CON DESPLEGABLE Y PERSISTENCIA */}
-                  <div className="pt-6 border-t border-slate-100">
-                    <h3 className="text-base font-serif text-slate-900 mb-1">Vincular Familia</h3>
-                    <p className="text-xs text-slate-500 mb-3">
-                      Selecciona la cuenta de padre o tutor legal registrada para asignarla a {selectedStudent.name}.
-                    </p>
-                    <form onSubmit={handleLinkParent} className="flex flex-col sm:flex-row gap-3 max-w-md">
-                      <select
-                        value={parentUsername}
-                        onChange={(e) => setParentUsername(e.target.value)}
-                        className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:border-slate-800"
-                        required
-                      >
-                        <option value="">-- Elige la cuenta de padre/madre --</option>
-                        {familyUsers.map((fam) => (
-                          <option key={fam.id} value={fam.username}>
-                            {fam.name} (@{fam.username})
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="submit"
-                        disabled={!parentUsername}
-                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition disabled:opacity-40"
-                      >
-                        Asignar
-                      </button>
-                    </form>
-                    {linkSuccess && (
-                      <p className="text-xs text-emerald-600 font-semibold mt-2">
-                        ✓ Vinculación guardada correctamente con @{parentUsername}.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'estadisticas' && (
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Estadísticas del Alumno</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
-                      <span className="text-xs text-slate-400 block mb-1">SkillCoins Totales</span>
-                      <span className="text-xl sm:text-2xl font-bold text-slate-900">{selectedStudent.skillCoins} SC</span>
-                    </div>
-                    <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
-                      <span className="text-xs text-slate-400 block mb-1">Actividades Realizadas</span>
-                      <span className="text-xl sm:text-2xl font-bold text-slate-900">1</span>
-                    </div>
-                    <div className="p-4 rounded-xl bg-[#FDFBF7] border border-slate-100">
-                      <span className="text-xs text-slate-400 block mb-1">Promedio de Acierto</span>
-                      <span className="text-xl sm:text-2xl font-bold text-slate-900">80%</span>
-                    </div>
-                  </div>
-                  <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center bg-slate-50/50">
-                    <p className="text-xs font-medium text-slate-400">Estructura preparada para conexión de métricas.</p>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'asignar' && (
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Asignar Tarea</h2>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Asignatura</label>
-                      <select className="w-full border border-slate-200 rounded-xl p-2.5 text-xs bg-white">
-                        <option>Inglés</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Área</label>
-                      <div className="flex flex-wrap gap-2">
-                        {['Vocabulary', 'Grammar', 'Reading', 'Listening', 'Writing'].map((it, idx) => (
-                          <span key={it} className={`px-3 py-1.5 rounded-lg border text-xs font-semibold ${idx === 0 ? 'bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>
-                            {it}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'calculalo' && (
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Calcúlalo (Acceso Mentor)</h2>
-                  <div className="bg-[#FDFBF7] p-5 sm:p-6 rounded-2xl border border-slate-100 mb-6">
-                    <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones de acceso:</h3>
-                    <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
-                      <li>Pulsa en el botón «Acceder a Calcúlalo».</li>
-                      <li>Selecciona la opción <strong>«Docente»</strong>.</li>
-                      <li>Introduce tus claves de tutor.</li>
-                    </ol>
-                  </div>
-                  <a
-                    href="https://calculalo.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
-                  >
-                    Acceder a Calcúlalo
-                  </a>
-                </div>
-              )}
-
-              {activeTab === 'mehmiro' && (
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Mehmiro</h2>
-                  <div className="bg-[#FDFBF7] p-5 sm:p-6 rounded-2xl border border-slate-100 mb-6">
-                    <h3 className="text-sm font-bold text-slate-900 mb-3">Instrucciones:</h3>
-                    <ol className="list-decimal list-inside space-y-2 text-xs text-slate-600">
-                      <li>Haz clic en «Acceder a Mehmiro».</li>
-                      <li>Inicia sesión con tu cuenta de tutor/mentor.</li>
-                    </ol>
-                  </div>
-                  <a
-                    href="https://memiro.metodokiru.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-6 py-3 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition"
-                  >
-                    Acceder a Mehmiro
-                  </a>
-                </div>
-              )}
-
-              {activeTab === 'informe' && (
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-serif text-slate-900 mb-2">Asignar Informe</h2>
-                  <div className="min-h-[220px]" />
-                </div>
-              )}
+              </div>
             </div>
           </div>
         )}
-      </div>
+
+        {/* PESTAÑA 3: ASIGNATURAS Y ENLACES */}
+        {activeTab === "asignaturas" && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 max-w-xl">
+            <div>
+              <h3 className="font-serif text-base text-slate-900">Recomendaciones por Asignatura</h3>
+              <p className="text-xs text-slate-500">Envía notas pedagógicas y enlaces a vídeos o actividades para el alumno.</p>
+            </div>
+
+            <form onSubmit={handleSaveSubjectResource} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Alumno Destinatario
+                </label>
+                <select
+                  value={selectedStudent}
+                  onChange={(e) => setSelectedStudent(e.target.value)}
+                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
+                >
+                  {students.map((st) => (
+                    <option key={st.id} value={st.username}>
+                      {st.name} (@{st.username})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Asignatura
+                </label>
+                <select
+                  value={subjectId}
+                  onChange={(e) => setSubjectId(e.target.value)}
+                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
+                >
+                  <option value="geo">Geografía</option>
+                  <option value="his">Historia</option>
+                  <option value="fis">Física</option>
+                  <option value="len">Lengua</option>
+                  <option value="ing">Inglés</option>
+                  <option value="qui">Química</option>
+                  <option value="bio">Biología</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Recomendación o Mensaje
+                </label>
+                <textarea
+                  rows={3}
+                  value={subjectNote}
+                  onChange={(e) => setSubjectNote(e.target.value)}
+                  placeholder="Ej: Revisa el vídeo del canal antes de la sesión del jueves."
+                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Enlace opcional (YouTube, documento, etc.)
+                </label>
+                <input
+                  type="url"
+                  value={subjectLink}
+                  onChange={(e) => setSubjectLink(e.target.value)}
+                  placeholder="https://youtube.com/..."
+                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <Save className="w-3.5 h-3.5" /> Asignar Recurso
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* PESTAÑA 4: SKILLCOINS SEMANALES */}
+        {activeTab === "estadisticas" && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-5 max-w-md">
+            <div>
+              <h3 className="font-serif text-base text-slate-900">SkillCoins Semanales (No acumuladas)</h3>
+              <p className="text-xs text-slate-500">
+                Registra las SkillCoins logradas por el alumno en la última sesión semanal.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Alumno
+              </label>
+              <select
+                value={selectedStudent}
+                onChange={(e) => setSelectedStudent(e.target.value)}
+                className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
+              >
+                {students.map((st) => (
+                  <option key={st.id} value={st.username}>
+                    {st.name} (@{st.username})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="number"
+                placeholder="Ej: 5"
+                id="weeklyCoinsInput"
+                className="w-28 p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-slate-800"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const input = document.getElementById("weeklyCoinsInput") as HTMLInputElement;
+                  if (input && input.value) {
+                    const val = parseInt(input.value);
+                    const today = new Date().toLocaleDateString("es-ES");
+                    localStorage.setItem(`kiru_sc_${selectedStudent}`, JSON.stringify({ coins: val, date: today }));
+                    setMsg(`Guardado: ${val} SC asignadas el ${today}`);
+                    setTimeout(() => setMsg(null), 3000);
+                  }
+                }}
+                className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition shadow-sm"
+              >
+                Guardar semana
+              </button>
+            </div>
+
+            <p className="text-[11px] text-slate-400 italic">
+              Actualizado automáticamente en la vista de progreso del alumno y la familia.
+            </p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
