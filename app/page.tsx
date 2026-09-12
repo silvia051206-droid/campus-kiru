@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, KeyRound, ArrowRight, X } from "lucide-react";
+import Link from "next/link";
+import { Eye, EyeOff, KeyRound, ArrowRight, X, MessageCircle, Users, MapPin, Sparkles } from "lucide-react";
 
 interface UserAccount {
   name: string;
@@ -18,7 +19,7 @@ const DEFAULT_USERS: UserAccount[] = [
   { name: "Administrador General", username: "admin", password: "admin123", role: "admin" },
 ];
 
-export default function LoginPage() {
+export default function HomePage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +30,8 @@ export default function LoginPage() {
   const [recoverFullName, setRecoverFullName] = useState("");
   const [recoveredPass, setRecoveredPass] = useState<string | null>(null);
   const [recoverError, setRecoverError] = useState("");
+
+  const whatsappMessage = encodeURIComponent("Hola, me gustaría más información sobre Método Kiru");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,83 +89,164 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-4 font-sans text-slate-800">
-      <div className="w-full max-w-md bg-white rounded-3xl p-8 border border-slate-200 shadow-sm space-y-6">
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-[#F4EFEA] flex items-center justify-center text-slate-800 font-serif font-bold text-xl">
+    <div className="min-h-screen bg-[#FDFBF7] text-slate-800 font-sans flex flex-col justify-between">
+      {/* Barra de navegación superior limpia */}
+      <header className="bg-white/90 backdrop-blur-sm border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold text-sm">
             K
           </div>
-          <h1 className="text-2xl font-serif text-slate-900">Campus Método Kiru</h1>
-          <p className="text-xs text-slate-500">Accede a tu panel educativo</p>
+          <div>
+            <span className="font-serif text-lg text-slate-900 font-bold block leading-none">Método Kiru</span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Acompañamiento a Domicilio</span>
+          </div>
         </div>
 
-        {error && (
-          <div className="p-3 text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-xl">
-            {error}
-          </div>
-        )}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/equipo"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+          >
+            <Users className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Nuestro</span> Equipo
+          </Link>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-              Usuario
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ej: carmen, mentor, familia..."
-              className="w-full p-3 bg-[#F8FAFC] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
-              required
-            />
+          <a
+            href={`https://wa.me/34600000000?text=${whatsappMessage}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition shadow-sm"
+          >
+            <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
+            <span>WhatsApp</span>
+          </a>
+
+          <a
+            href="#acceso-campus"
+            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-sm"
+          >
+            Plataforma Kiru
+          </a>
+        </div>
+      </header>
+
+      {/* Contenido Principal */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        
+        {/* Información de Cobertura y Metodología */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Atención Personalizada a Domicilio</span>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-              Contraseña
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full p-3 pr-10 bg-[#F8FAFC] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+          <h1 className="text-3xl sm:text-5xl font-serif text-slate-900 leading-tight">
+            Autonomía, hábitos y excelencia escolar.
+          </h1>
+
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-xl">
+            Mentorías individualizadas para estudiantes de Primaria, ESO y Bachillerato. Desarrollamos técnicas de estudio personalizadas, enfoque en TDAH / Altas Capacidades y seguimiento semanal coordinado con las familias.
+          </p>
+
+          {/* Cobertura de Zonas Noroeste y Chamberí */}
+          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2.5 max-w-lg">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <MapPin className="w-4 h-4 text-emerald-800" />
+              <span>Zonas de Cobertura Principal</span>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-medium text-slate-700">
+              {["Pozuelo de Alarcón", "Aravaca", "Valdemarín", "Chamberí"].map((zone) => (
+                <span key={zone} className="px-3 py-1 bg-[#FAF8F5] border border-slate-200 rounded-xl">
+                  {zone}
+                </span>
+              ))}
             </div>
           </div>
+        </div>
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                setIsRecoverOpen(true);
-                setRecoveredPass(null);
-                setRecoverError("");
-              }}
-              className="text-xs text-slate-500 hover:text-slate-900 hover:underline"
-            >
-              ¿Olvidaste tu contraseña?
-            </button>
+        {/* Tarjeta de Acceso al Campus */}
+        <div id="acceso-campus" className="lg:col-span-5">
+          <div className="w-full bg-white rounded-3xl p-7 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Campus Virtual</span>
+              <h2 className="text-2xl font-serif text-slate-900">Iniciar Sesión</h2>
+              <p className="text-xs text-slate-500">Accede a tu panel como Alumno, Padre, Mentor o Administrador</p>
+            </div>
+
+            {error && (
+              <div className="p-3 text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-xl">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Usuario
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="carmen, familia, mentor o admin"
+                  className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800 font-medium"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full p-3 pr-10 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800 font-medium"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRecoverOpen(true);
+                    setRecoveredPass(null);
+                    setRecoverError("");
+                  }}
+                  className="text-xs text-slate-500 hover:text-slate-900 hover:underline"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-2 shadow-sm"
+              >
+                <span>Acceder a la Plataforma</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
           </div>
+        </div>
+      </main>
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-2"
-          >
-            <span>Iniciar Sesión</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </form>
-      </div>
+      {/* Pie de página */}
+      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
+        <p>© 2026 Método Kiru. Acompañamiento educativo y formativo personalizado.</p>
+      </footer>
 
       {/* Modal Recuperación */}
       {isRecoverOpen && (
@@ -179,16 +263,16 @@ export default function LoginPage() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Escribe tu nombre y apellidos tal como fueron registrados.
+              Escribe tu nombre completo tal como está registrado (ej. Carmen Fernández).
             </p>
 
             <form onSubmit={handleRecover} className="space-y-3">
               <input
                 type="text"
-                placeholder="Ej: Carmen Fernández"
+                placeholder="Nombre y Apellidos"
                 value={recoverFullName}
                 onChange={(e) => setRecoverFullName(e.target.value)}
-                className="w-full p-3 bg-[#F8FAFC] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
+                className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
                 required
               />
 
@@ -208,7 +292,7 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
               >
-                Consultar Contraseña
+                Consultar
               </button>
             </form>
           </div>
