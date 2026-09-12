@@ -130,7 +130,7 @@ export default function MentorPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] pb-16 font-sans">
-      {/* Cabecera con botón de apagado en negro */}
+      {/* Cabecera con botón de desconexión en negro */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold">
@@ -217,7 +217,28 @@ export default function MentorPage() {
 
         {/* PESTAÑA 1: MEHMIRO */}
         {activeTab === "mehmiro" && (
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Banner de integración oficial con Mehmiro */}
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plataforma Externa</span>
+                <h3 className="text-lg font-serif text-slate-900">Acceso a Mehmiro</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Gestiona las sesiones, fichas y reportes pedagógicos directamente en la app oficial de Mehmiro.
+                </p>
+              </div>
+
+              <a
+                href="https://app.mehmiro.com/login"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition shadow-sm w-fit"
+              >
+                <span>Abrir app.mehmiro.com</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
             <div>
               <h2 className="text-xl font-serif text-slate-900">Alumnos Asignados</h2>
               <p className="text-xs text-slate-500">Selecciona un alumno para revisar su estado y herramientas activas.</p>
@@ -228,7 +249,7 @@ export default function MentorPage() {
                 <div
                   key={st.id}
                   onClick={() => setSelectedStudent(st.username)}
-                  className={`p-5 rounded-2xl border cursor-pointer transition shadow-sm space-y-2 ${
+                  className={`p-5 rounded-2xl border cursor-pointer transition shadow-sm space-y-3 ${
                     selectedStudent === st.username
                       ? "bg-white border-slate-900 ring-2 ring-slate-900/5"
                       : "bg-white border-slate-200 hover:border-slate-400"
@@ -243,9 +264,19 @@ export default function MentorPage() {
                       <p className="text-[11px] text-slate-400 font-mono">@{st.username}</p>
                     </div>
                   </div>
+
                   <div className="pt-2 flex justify-between items-center text-[10px] text-slate-500 border-t border-slate-100">
                     <span>Nivel: Explorador (1)</span>
-                    <span className="text-emerald-700 font-bold">Activo</span>
+                    <a
+                      href="https://app.mehmiro.com/login"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-700 hover:underline font-bold inline-flex items-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span>Ver en Mehmiro</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
                 </div>
               ))}
