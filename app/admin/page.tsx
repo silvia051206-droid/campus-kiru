@@ -14,7 +14,11 @@ import {
   Bell,
   FileText,
   Plus,
-  Users
+  Users,
+  CreditCard,
+  Upload,
+  ExternalLink,
+  Download
 } from "lucide-react";
 
 interface UserAccount {
@@ -24,6 +28,7 @@ interface UserAccount {
   password?: string;
   role: "alumno" | "mentor" | "padre" | "admin";
   createdAt: string;
+  assignedParent?: string; // Vinculación alumno -> padre
 }
 
 interface MentorStudentLink {
@@ -37,6 +42,10 @@ interface Notice {
   targetStudent: string; // username del alumno o "todos"
   date: string;
   content: string;
+  linkUrl?: string;
+  linkTitle?: string;
+  fileData?: string; // Base64 PDF
+  fileName?: string;
 }
 
 interface DocumentItem {
@@ -47,10 +56,22 @@ interface DocumentItem {
   requiresAcceptance: boolean;
   accepted?: boolean;
   acceptedAt?: string;
+  fileData?: string; // Base64 del archivo PDF real
+  fileName?: string;
+}
+
+interface PaymentRecord {
+  id: string;
+  studentUsername: string;
+  concept: string;
+  amount: number;
+  dueDate: string;
+  status: "Pagado" | "Pendiente";
+  payLink: string;
 }
 
 const DEFAULT_USERS: UserAccount[] = [
-  { id: "1", name: "Carmen Fernández", username: "carmen", password: "carmen123", role: "alumno", createdAt: "2026-08-20" },
+  { id: "1", name: "Carmen Fernández", username: "carmen", password: "carmen123", role: "alumno", createdAt: "2026-08-20", assignedParent: "familia" },
   { id: "2", name: "Tutor Principal", username: "mentor", password: "mentor123", role: "mentor", createdAt: "2026-08-20" },
   { id: "3", name: "Familia Fernández", username: "familia", password: "familia123", role: "padre", createdAt: "2026-08-20" },
   { id: "4", name: "Administrador General", username: "admin", password: "admin123", role: "admin", createdAt: "2026-08-20" },
@@ -61,7 +82,7 @@ const DEFAULT_LINKS: MentorStudentLink[] = [
 ];
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"usuarios" | "avisos" | "documentos">("usuarios");
+  const [activeTab, setActiveTab] = useState<"usuarios" | "avisos" | "documentos" | "pagos">("usuarios");
 
   const [users, setUsers] = useState<UserAccount[]>(DEFAULT_USERS);
   const [links, setLinks] = useState<MentorStudentLink[]>(DEFAULT_LINKS);
@@ -71,25 +92,42 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"alumno" | "mentor" | "padre" | "admin">("alumno");
   
-  // Estados para la vinculación Mentor <-> Alumno
+  // Mentor <-> Alumno
   const [selectedStudent, setSelectedStudent] = useState("");
   const [selectedMentor, setSelectedMentor] = useState("");
+
+  // Padre <-> Alumno
+  const [selectedChild, setSelectedChild] = useState("");
+  const [selectedParent, setSelectedParent] = useState("");
 
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
   const [msg, setMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  // Estados para Avisos
+  // Avisos (con soporte para enlaces y PDFs)
   const [notices, setNotices] = useState<Notice[]>([]);
   const [noticeTitle, setNoticeTitle] = useState("");
   const [noticeTarget, setNoticeTarget] = useState("todos");
   const [noticeContent, setNoticeContent] = useState("");
+  const [noticeLinkUrl, setNoticeLinkUrl] = useState("");
+  const [noticeLinkTitle, setNoticeLinkTitle] = useState("");
+  const [noticePdf, setNoticePdf] = useState<{ name: string; base64: string } | null>(null);
 
-  // Estados para Documentos
+  // Documentos PDF
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [docTitle, setDocTitle] = useState("");
   const [docTarget, setDocTarget] = useState("todos");
   const [docType, setDocType] = useState("Propuesta");
   const [requiresSign, setRequiresSign] = useState(false);
+  const [uploadedPdf, setUploadedPdf] = useState<{ name: string; base64: string } | null>(null);
+
+  // Pagos
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [payStudent, setPayStudent] = useState("");
+  const [payConcept, setPayConcept] = useState("Mentoría mensual");
+  const [payAmount, setPayAmount] = useState(75);
+  const [payDueDate, setPayDueDate] = useState("15/09/2026");
+  const [payStatus, setPayStatus] = useState<"Pagado" | "Pendiente">("Pendiente");
+  const [payLink, setPayLink] = useState("https://bizum.es");
 
   useEffect(() => {
     // Cargar usuarios
@@ -102,7 +140,7 @@ export default function AdminPage() {
       }
     }
 
-    // Cargar enlaces
+    // Cargar enlaces mentor
     const savedLinks = localStorage.getItem("kiru_mentor_links");
     if (savedLinks) {
       try {
@@ -127,7 +165,9 @@ export default function AdminPage() {
           title: "Festivo Nacional",
           targetStudent: "todos",
           date: "12 de Octubre",
-          content: "No habrá sesiones lectivas durante esta jornada festiva."
+          content: "No habrá sesiones lectivas durante esta jornada festiva.",
+          linkUrl: "https://calendario-laboral.com",
+          linkTitle: "Consultar calendario de festivos"
         }
       ];
       setNotices(initialNotices);
@@ -163,6 +203,23 @@ export default function AdminPage() {
       setDocuments(initialDocs);
       localStorage.setItem("kiru_admin_docs", JSON.stringify(initialDocs));
     }
+
+    // Cargar pagos
+    const savedPayments = localStorage.getItem("kiru_admin_payments");
+    if (savedPayments) {
+      try {
+        setPayments(JSON.parse(savedPayments));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      const initPays: PaymentRecord[] = [
+        { id: "p1", studentUsername: "carmen", concept: "Mentoría agosto", amount: 75, dueDate: "15/08/2026", status: "Pagado", payLink: "https://bizum.es" },
+        { id: "p2", studentUsername: "carmen", concept: "Mentoría septiembre", amount: 75, dueDate: "15/09/2026", status: "Pendiente", payLink: "https://bizum.es" }
+      ];
+      setPayments(initPays);
+      localStorage.setItem("kiru_admin_payments", JSON.stringify(initPays));
+    }
   }, []);
 
   const saveToStorage = (updatedUsers: UserAccount[]) => {
@@ -175,7 +232,31 @@ export default function AdminPage() {
     localStorage.setItem("kiru_mentor_links", JSON.stringify(updatedLinks));
   };
 
-  // Gestión de Usuarios
+  // Subida de PDF en Avisos
+  const handleNoticePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNoticePdf({ name: file.name, base64: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Subida de PDF en Documentos
+  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUploadedPdf({ name: file.name, base64: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Crear usuario
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !username.trim() || !password.trim()) {
@@ -262,7 +343,7 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 4000);
   };
 
-  // Vinculación Mentor <-> Alumno
+  // Mentor <-> Alumno
   const handleAssignMentor = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !selectedMentor) {
@@ -288,7 +369,21 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 4000);
   };
 
-  // Gestión de Avisos
+  // Padre <-> Alumno
+  const handleAssignParent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedChild || !selectedParent) {
+      setMsg({ text: "Selecciona tanto un alumno como un tutor familiar.", type: "error" });
+      return;
+    }
+
+    const updated = users.map(u => u.username === selectedChild ? { ...u, assignedParent: selectedParent } : u);
+    saveToStorage(updated);
+    setMsg({ text: `Vinculación guardada: Alumno @${selectedChild} asignado a Familia @${selectedParent}.`, type: "success" });
+    setTimeout(() => setMsg(null), 4000);
+  };
+
+  // Avisos (con Enlace y PDF)
   const handleCreateNotice = (e: React.FormEvent) => {
     e.preventDefault();
     if (!noticeTitle.trim() || !noticeContent.trim()) return;
@@ -298,7 +393,11 @@ export default function AdminPage() {
       title: noticeTitle.trim(),
       targetStudent: noticeTarget,
       date: new Date().toLocaleDateString("es-ES", { day: "numeric", month: "short" }),
-      content: noticeContent.trim()
+      content: noticeContent.trim(),
+      linkUrl: noticeLinkUrl.trim() || undefined,
+      linkTitle: noticeLinkTitle.trim() || (noticeLinkUrl ? "Abrir enlace de interés" : undefined),
+      fileData: noticePdf?.base64,
+      fileName: noticePdf?.name
     };
 
     const updated = [newNotice, ...notices];
@@ -307,6 +406,9 @@ export default function AdminPage() {
 
     setNoticeTitle("");
     setNoticeContent("");
+    setNoticeLinkUrl("");
+    setNoticeLinkTitle("");
+    setNoticePdf(null);
     setMsg({ text: "Aviso publicado con éxito.", type: "success" });
     setTimeout(() => setMsg(null), 3000);
   };
@@ -319,7 +421,7 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 3000);
   };
 
-  // Gestión de Documentos PDF
+  // Documentos
   const handleCreateDocument = (e: React.FormEvent) => {
     e.preventDefault();
     if (!docTitle.trim()) return;
@@ -330,7 +432,9 @@ export default function AdminPage() {
       targetStudent: docTarget,
       type: docType,
       requiresAcceptance: requiresSign,
-      accepted: false
+      accepted: false,
+      fileData: uploadedPdf?.base64,
+      fileName: uploadedPdf?.name
     };
 
     const updated = [newDoc, ...documents];
@@ -339,7 +443,8 @@ export default function AdminPage() {
 
     setDocTitle("");
     setRequiresSign(false);
-    setMsg({ text: "Documento publicado y asignado.", type: "success" });
+    setUploadedPdf(null);
+    setMsg({ text: "Documento publicado y disponible en el panel familiar.", type: "success" });
     setTimeout(() => setMsg(null), 3000);
   };
 
@@ -351,12 +456,40 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 3000);
   };
 
+  // Pagos
+  const handleCreatePayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    const target = payStudent || alumnos[0]?.username || "carmen";
+    const newPay: PaymentRecord = {
+      id: Date.now().toString(),
+      studentUsername: target,
+      concept: payConcept.trim(),
+      amount: payAmount,
+      dueDate: payDueDate.trim(),
+      status: payStatus,
+      payLink: payLink.trim()
+    };
+
+    const updated = [newPay, ...payments];
+    setPayments(updated);
+    localStorage.setItem("kiru_admin_payments", JSON.stringify(updated));
+    setMsg({ text: `Pago registrado correctamente para @${target}.`, type: "success" });
+    setTimeout(() => setMsg(null), 3000);
+  };
+
+  const togglePaymentStatus = (id: string) => {
+    const updated = payments.map(p => p.id === id ? { ...p, status: (p.status === "Pagado" ? "Pendiente" : "Pagado") as "Pagado" | "Pendiente" } : p);
+    setPayments(updated);
+    localStorage.setItem("kiru_admin_payments", JSON.stringify(updated));
+  };
+
   const alumnos = users.filter(u => u.role === "alumno");
   const mentores = users.filter(u => u.role === "mentor");
+  const padres = users.filter(u => u.role === "padre");
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] pb-16 font-sans">
-      {/* Cabecera con botón de apagado en negro */}
+      {/* Cabecera */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-6 h-6 text-emerald-800" />
@@ -392,7 +525,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Pestañas de navegación de Administración */}
+        {/* Pestañas de navegación */}
         <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-wrap gap-2 shadow-sm text-xs font-semibold w-fit">
           <button
             onClick={() => setActiveTab("usuarios")}
@@ -404,15 +537,6 @@ export default function AdminPage() {
             <span>Usuarios y Enlaces</span>
           </button>
           <button
-            onClick={() => setActiveTab("avisos")}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
-              activeTab === "avisos" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            <Bell className="w-3.5 h-3.5" />
-            <span>Gestión de Avisos</span>
-          </button>
-          <button
             onClick={() => setActiveTab("documentos")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
               activeTab === "documentos" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
@@ -421,174 +545,136 @@ export default function AdminPage() {
             <FileText className="w-3.5 h-3.5" />
             <span>Gestión de Documentos PDF</span>
           </button>
+          <button
+            onClick={() => setActiveTab("pagos")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "pagos" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Gestión de Pagos</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("avisos")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "avisos" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span>Gestión de Avisos</span>
+          </button>
         </div>
 
         {/* SECCIÓN 1: USUARIOS Y VÍNCULOS */}
         {activeTab === "usuarios" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Columna Izquierda: Formularios */}
             <div className="space-y-6">
-              
-              {/* Formulario Crear Usuario */}
+              {/* Crear Usuario */}
               <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
                 <div className="flex items-center gap-2">
                   <UserPlus className="w-5 h-5 text-emerald-800" />
                   <h2 className="font-serif text-lg text-slate-900">Crear nuevo usuario</h2>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Registra nuevos alumnos, mentores o tutores legales.
-                </p>
-
                 <form onSubmit={handleCreateUser} className="space-y-3 pt-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Nombre completo
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej: Lucía Navarro"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                    />
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nombre completo</label>
+                    <input type="text" placeholder="Ej: Lucía Navarro" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none" />
                   </div>
-
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Usuario
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej: lucia"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                    />
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Usuario</label>
+                    <input type="text" placeholder="Ej: lucia" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none" />
                   </div>
-
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Contraseña
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej: lucia123"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                    />
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Contraseña</label>
+                    <input type="text" placeholder="Ej: lucia123" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none" />
                   </div>
-
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Tipo de usuario / Rol
-                    </label>
-                    <select
-                      value={role}
-                      onChange={(e) => setRole(e.target.value as any)}
-                      className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
-                    >
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo de usuario / Rol</label>
+                    <select value={role} onChange={(e) => setRole(e.target.value as any)} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none">
                       <option value="alumno">Alumno</option>
                       <option value="mentor">Mentor</option>
                       <option value="padre">Padre / Madre</option>
                       <option value="admin">Administrador</option>
                     </select>
                   </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-slate-900 text-white text-xs font-semibold rounded-2xl hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2"
-                  >
+                  <button type="submit" className="w-full py-3 bg-slate-900 text-white text-xs font-semibold rounded-2xl hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2">
                     <UserPlus className="w-4 h-4" /> Registrar Usuario
                   </button>
                 </form>
               </div>
 
-              {/* Tarjeta Enlazar Alumno con Mentor */}
+              {/* Enlazar Mentor y Alumno */}
               <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
                 <div className="flex items-center gap-2">
                   <Link2 className="w-5 h-5 text-blue-600" />
                   <h2 className="font-serif text-lg text-slate-900">Enlazar Mentor y Alumno</h2>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Asigna a cada alumno su mentor correspondiente.
-                </p>
-
                 <form onSubmit={handleAssignMentor} className="space-y-3 pt-2">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Seleccionar Alumno
-                    </label>
-                    <select
-                      value={selectedStudent}
-                      onChange={(e) => setSelectedStudent(e.target.value)}
-                      className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
-                    >
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Alumno</label>
+                    <select value={selectedStudent} onChange={(e) => setSelectedStudent(e.target.value)} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900">
                       <option value="">-- Elige un alumno --</option>
-                      {alumnos.map((a) => (
-                        <option key={a.id} value={a.username}>
-                          {a.name} (@{a.username})
-                        </option>
-                      ))}
+                      {alumnos.map((a) => (<option key={a.id} value={a.username}>{a.name} (@{a.username})</option>))}
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Seleccionar Mentor
-                    </label>
-                    <select
-                      value={selectedMentor}
-                      onChange={(e) => setSelectedMentor(e.target.value)}
-                      className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
-                    >
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Mentor</label>
+                    <select value={selectedMentor} onChange={(e) => setSelectedMentor(e.target.value)} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900">
                       <option value="">-- Elige un mentor --</option>
-                      {mentores.map((m) => (
-                        <option key={m.id} value={m.username}>
-                          {m.name} (@{m.username})
-                        </option>
-                      ))}
+                      {mentores.map((m) => (<option key={m.id} value={m.username}>{m.name} (@{m.username})</option>))}
                     </select>
                   </div>
-
-                  <button
-                    type="submit"
-                    disabled={!selectedStudent || !selectedMentor}
-                    className="w-full py-3 bg-blue-700 text-white text-xs font-semibold rounded-2xl hover:bg-blue-800 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2 disabled:opacity-40"
-                  >
+                  <button type="submit" disabled={!selectedStudent || !selectedMentor} className="w-full py-3 bg-blue-700 text-white text-xs font-semibold rounded-2xl hover:bg-blue-800 transition shadow-sm flex items-center justify-center gap-2 mt-2 disabled:opacity-40">
                     <Link2 className="w-4 h-4" /> Asignar Mentor
                   </button>
                 </form>
               </div>
 
+              {/* Enlazar Alumno y Familia */}
+              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
+                <div className="flex items-center gap-2">
+                  <Link2 className="w-5 h-5 text-amber-600" />
+                  <h2 className="font-serif text-lg text-slate-900">Enlazar Alumno y Familia</h2>
+                </div>
+                <form onSubmit={handleAssignParent} className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Alumno</label>
+                    <select value={selectedChild} onChange={(e) => setSelectedChild(e.target.value)} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900">
+                      <option value="">-- Elige un alumno --</option>
+                      {alumnos.map((a) => (<option key={a.id} value={a.username}>{a.name} (@{a.username})</option>))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Familia / Tutor</label>
+                    <select value={selectedParent} onChange={(e) => setSelectedParent(e.target.value)} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900">
+                      <option value="">-- Elige un usuario padre --</option>
+                      {padres.map((p) => (<option key={p.id} value={p.username}>{p.name} (@{p.username})</option>))}
+                    </select>
+                  </div>
+                  <button type="submit" disabled={!selectedChild || !selectedParent} className="w-full py-3 bg-amber-700 text-white text-xs font-semibold rounded-2xl hover:bg-amber-800 transition shadow-sm flex items-center justify-center gap-2 mt-2 disabled:opacity-40">
+                    <Link2 className="w-4 h-4" /> Asignar Familia
+                  </button>
+                </form>
+              </div>
             </div>
 
-            {/* Tabla de Usuarios Registrados */}
+            {/* Tabla de Usuarios */}
             <div className="lg:col-span-2 bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-sm space-y-4">
-              <div>
-                <h2 className="font-serif text-lg text-slate-900">Usuarios registrados ({users.length})</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Visualiza, edita o elimina las cuentas del sistema.
-                </p>
-              </div>
-
+              <h2 className="font-serif text-lg text-slate-900">Usuarios registrados ({users.length})</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
                       <th className="pb-3 pl-2">Nombre / Usuario</th>
                       <th className="pb-3">Rol</th>
-                      <th className="pb-3">Mentor Asignado</th>
-                      <th className="pb-3">Contraseña</th>
+                      <th className="pb-3">Mentor</th>
+                      <th className="pb-3">Familia</th>
                       <th className="pb-3 text-right pr-2">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-900">
                     {users.map((user) => {
                       const mentorLink = links.find(l => l.studentUsername === user.username);
-                      const mentorObj = mentorLink ? users.find(u => u.username === mentorLink.mentorUsername) : null;
-
                       return (
                         <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                           <td className="py-3.5 pl-2">
@@ -596,60 +682,34 @@ export default function AdminPage() {
                             <p className="text-[11px] text-slate-400 font-mono">@{user.username}</p>
                           </td>
                           <td className="py-3.5">
-                            <span
-                              className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase ${
-                                user.role === "admin"
-                                  ? "bg-purple-100 text-purple-700"
-                                  : user.role === "mentor"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : user.role === "padre"
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-emerald-100 text-emerald-700"
-                              }`}
-                            >
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                              user.role === "admin" ? "bg-purple-100 text-purple-700" :
+                              user.role === "mentor" ? "bg-blue-100 text-blue-700" :
+                              user.role === "padre" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+                            }`}>
                               {user.role}
                             </span>
                           </td>
                           <td className="py-3.5">
                             {user.role === "alumno" ? (
                               mentorLink ? (
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 text-[11px] font-medium border border-blue-200">
-                                  <CheckCircle2 className="w-3 h-3 text-blue-600" />
-                                  <span>{mentorObj ? mentorObj.name : `@${mentorLink.mentorUsername}`}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveLink(user.username)}
-                                    className="ml-1 text-blue-400 hover:text-rose-600 font-bold"
-                                    title="Quitar mentor"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="text-[11px] text-slate-400 italic">Sin mentor</span>
-                              )
-                            ) : (
-                              <span className="text-[11px] text-slate-300">—</span>
-                            )}
+                                <span className="text-[11px] font-semibold text-blue-700">@{mentorLink.mentorUsername}</span>
+                              ) : <span className="text-[11px] text-slate-400 italic">Sin asignar</span>
+                            ) : "—"}
                           </td>
-                          <td className="py-3.5 font-mono text-[11px] text-slate-500">
-                            {user.password || "••••••••"}
+                          <td className="py-3.5">
+                            {user.role === "alumno" ? (
+                              user.assignedParent ? (
+                                <span className="text-[11px] font-semibold text-amber-700">@{user.assignedParent}</span>
+                              ) : <span className="text-[11px] text-slate-400 italic">Sin asignar</span>
+                            ) : "—"}
                           </td>
                           <td className="py-3.5 text-right pr-2">
                             <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                onClick={() => setEditingUser(user)}
-                                className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-slate-900 hover:text-white hover:border-slate-900 text-slate-500 transition-all"
-                                title="Editar usuario"
-                              >
+                              <button onClick={() => setEditingUser(user)} className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-slate-900 hover:text-white transition">
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
-
-                              <button
-                                onClick={() => handleDeleteUser(user.id, user.username)}
-                                className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-rose-600 hover:text-white hover:border-rose-600 text-slate-500 transition-all"
-                                title="Eliminar usuario"
-                              >
+                              <button onClick={() => handleDeleteUser(user.id, user.username)} className="p-2 rounded-xl border border-slate-200 bg-[#F7F6F3] hover:bg-rose-600 hover:text-white transition">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
@@ -664,7 +724,180 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* SECCIÓN 2: GESTIÓN DE AVISOS */}
+        {/* SECCIÓN 2: GESTIÓN DE DOCUMENTOS PDF REALES */}
+        {activeTab === "documentos" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-1 h-fit">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-slate-700" />
+                <h2 className="font-serif text-base text-slate-900">Subir Documento PDF</h2>
+              </div>
+
+              <form onSubmit={handleCreateDocument} className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Título del documento</label>
+                  <input type="text" value={docTitle} onChange={(e) => setDocTitle(e.target.value)} placeholder="Ej: Propuesta de Acompañamiento" className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs" required />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Asignar a</label>
+                  <select value={docTarget} onChange={(e) => setDocTarget(e.target.value)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800">
+                    <option value="todos">Todos los alumnos / Padres</option>
+                    {alumnos.map((a) => (<option key={a.id} value={a.username}>{a.name} (@{a.username})</option>))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Tipo de documento</label>
+                  <select value={docType} onChange={(e) => setDocType(e.target.value)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800">
+                    <option value="Propuesta">Propuesta personalizada</option>
+                    <option value="Normas">Normas de Método Kiru</option>
+                    <option value="Informe">Informe pedagógico</option>
+                    <option value="Otro">Otro documento</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Adjuntar Archivo PDF</label>
+                  <input type="file" accept=".pdf" onChange={handlePdfUpload} className="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:text-xs" />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input type="checkbox" id="requireSignCheck" checked={requiresSign} onChange={(e) => setRequiresSign(e.target.checked)} className="rounded border-slate-300 text-slate-900 focus:ring-0" />
+                  <label htmlFor="requireSignCheck" className="text-xs text-slate-600">Requiere confirmación de lectura</label>
+                </div>
+
+                <button type="submit" className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm">
+                  <Plus className="w-4 h-4" /> Publicar Documento
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
+              <h2 className="font-serif text-base text-slate-900">Documentos Publicados ({documents.length})</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {documents.map((d) => (
+                  <div key={d.id} className="p-4 rounded-2xl border border-slate-100 bg-[#FAF8F5] flex flex-col justify-between space-y-3 shadow-sm">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{d.type}</span>
+                        <button onClick={() => handleDeleteDoc(d.id)} className="text-slate-400 hover:text-rose-600 transition" title="Eliminar"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                      <h3 className="font-serif text-sm text-slate-900 font-medium mt-1">{d.title}</h3>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Asignado a: <strong className="text-slate-700">{d.targetStudent === "todos" ? "Todos" : `@${d.targetStudent}`}</strong>
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[10px]">
+                      {d.fileData ? (
+                        <a href={d.fileData} download={d.fileName || "documento.pdf"} className="text-emerald-700 font-bold hover:underline">
+                          Descargar ({d.fileName || "PDF"})
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">PDF del sistema</span>
+                      )}
+                      {d.requiresAcceptance ? <span className="text-amber-700 font-semibold">● Requiere firma</span> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SECCIÓN 3: GESTIÓN DE PAGOS */}
+        {activeTab === "pagos" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-1 h-fit">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-slate-700" />
+                <h2 className="font-serif text-base text-slate-900">Configurar Próximo Pago</h2>
+              </div>
+
+              <form onSubmit={handleCreatePayment} className="space-y-3 text-xs">
+                <div>
+                  <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Alumno</label>
+                  <select value={payStudent} onChange={(e) => setPayStudent(e.target.value)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl">
+                    {alumnos.map((a) => (<option key={a.id} value={a.username}>{a.name} (@{a.username})</option>))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Concepto</label>
+                  <input type="text" value={payConcept} onChange={(e) => setPayConcept(e.target.value)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Importe (€)</label>
+                  <input type="number" value={payAmount} onChange={(e) => setPayAmount(Number(e.target.value))} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Fecha Límite</label>
+                  <input type="text" value={payDueDate} onChange={(e) => setPayDueDate(e.target.value)} placeholder="15/09/2026" className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Estado</label>
+                  <select value={payStatus} onChange={(e) => setPayStatus(e.target.value as any)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Pagado">Pagado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Enlace de Pago</label>
+                  <input type="text" value={payLink} onChange={(e) => setPayLink(e.target.value)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+                </div>
+
+                <button type="submit" className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition">
+                  Registrar / Actualizar Pago
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
+              <h2 className="font-serif text-base text-slate-900">Historial y Control de Pagos ({payments.length})</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[#FAF8F5] border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                      <th className="p-3">Alumno</th>
+                      <th className="p-3">Concepto</th>
+                      <th className="p-3">Importe</th>
+                      <th className="p-3">Fecha</th>
+                      <th className="p-3">Estado</th>
+                      <th className="p-3 text-right">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {payments.map((p) => (
+                      <tr key={p.id}>
+                        <td className="p-3 font-semibold">@{p.studentUsername}</td>
+                        <td className="p-3">{p.concept}</td>
+                        <td className="p-3 font-bold">{p.amount} €</td>
+                        <td className="p-3 text-slate-500">{p.dueDate}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${p.status === "Pagado" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <button onClick={() => togglePaymentStatus(p.id)} className="text-[11px] underline text-slate-600 hover:text-slate-900">
+                            Cambiar Estado
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SECCIÓN 4: GESTIÓN DE AVISOS (CON PDF Y ENLACES) */}
         {activeTab === "avisos" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-1 h-fit">
@@ -675,209 +908,79 @@ export default function AdminPage() {
 
               <form onSubmit={handleCreateNotice} className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Título del aviso
-                  </label>
-                  <input
-                    type="text"
-                    value={noticeTitle}
-                    onChange={(e) => setNoticeTitle(e.target.value)}
-                    placeholder="Ej: Cambio de horario"
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
-                    required
-                  />
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Título del aviso</label>
+                  <input type="text" value={noticeTitle} onChange={(e) => setNoticeTitle(e.target.value)} placeholder="Ej: Festivo o cambio de hora" className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs" required />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Destinatario
-                  </label>
-                  <select
-                    value={noticeTarget}
-                    onChange={(e) => setNoticeTarget(e.target.value)}
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
-                  >
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Destinatario</label>
+                  <select value={noticeTarget} onChange={(e) => setNoticeTarget(e.target.value)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800">
                     <option value="todos">Todos los alumnos / Familias</option>
-                    {alumnos.map((a) => (
-                      <option key={a.id} value={a.username}>
-                        {a.name} (@{a.username})
-                      </option>
-                    ))}
+                    {alumnos.map((a) => (<option key={a.id} value={a.username}>{a.name} (@{a.username})</option>))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Mensaje
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={noticeContent}
-                    onChange={(e) => setNoticeContent(e.target.value)}
-                    placeholder="Escribe aquí el texto del aviso (festivo, cancelación...)"
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
-                    required
-                  />
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Mensaje</label>
+                  <textarea rows={3} value={noticeContent} onChange={(e) => setNoticeContent(e.target.value)} placeholder="Escribe el texto del aviso..." className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs" required />
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
-                >
+                <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Enlace opcional</span>
+                  <input type="url" value={noticeLinkUrl} onChange={(e) => setNoticeLinkUrl(e.target.value)} placeholder="https://..." className="w-full p-2 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs" />
+                  <input type="text" value={noticeLinkTitle} onChange={(e) => setNoticeLinkTitle(e.target.value)} placeholder="Texto del botón (ej: Ver información)" className="w-full p-2 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs" />
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">PDF adjunto opcional</span>
+                  <input type="file" accept=".pdf" onChange={handleNoticePdfUpload} className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:text-xs" />
+                </div>
+
+                <button type="submit" className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm mt-3">
                   <Plus className="w-4 h-4" /> Publicar Aviso
                 </button>
               </form>
             </div>
 
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
-              <h2 className="font-serif text-base text-slate-900">Avisos Activos en el Campus ({notices.length})</h2>
+              <h2 className="font-serif text-base text-slate-900">Avisos Activos ({notices.length})</h2>
               <div className="space-y-3">
                 {notices.map((n) => (
-                  <div
-                    key={n.id}
-                    className="p-4 rounded-2xl border border-slate-100 bg-[#FAF8F5] flex justify-between items-start gap-4 shadow-sm"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-xs text-slate-900">{n.title}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-medium">
-                          {n.targetStudent === "todos" ? "Todas las familias" : `Alumno: @${n.targetStudent}`}
-                        </span>
+                  <div key={n.id} className="p-4 rounded-2xl border border-slate-100 bg-[#FAF8F5] space-y-3 shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-xs text-slate-900">{n.title}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-medium">
+                            {n.targetStudent === "todos" ? "Todas las familias" : `@${n.targetStudent}`}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600">{n.content}</p>
+                        <span className="text-[10px] text-slate-400 block pt-1">{n.date}</span>
                       </div>
-                      <p className="text-xs text-slate-600">{n.content}</p>
-                      <span className="text-[10px] text-slate-400 block pt-1">{n.date}</span>
+
+                      <button onClick={() => handleDeleteNotice(n.id)} className="p-1.5 text-slate-400 hover:text-rose-600 transition" title="Eliminar">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => handleDeleteNotice(n.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition"
-                      title="Eliminar aviso"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SECCIÓN 3: GESTIÓN DE DOCUMENTOS PDF */}
-        {activeTab === "documentos" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-1 h-fit">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-slate-700" />
-                <h2 className="font-serif text-base text-slate-900">Subir Documento</h2>
-              </div>
-
-              <form onSubmit={handleCreateDocument} className="space-y-3">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Título del documento
-                  </label>
-                  <input
-                    type="text"
-                    value={docTitle}
-                    onChange={(e) => setDocTitle(e.target.value)}
-                    placeholder="Ej: Propuesta de Acompañamiento"
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Asignar a
-                  </label>
-                  <select
-                    value={docTarget}
-                    onChange={(e) => setDocTarget(e.target.value)}
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
-                  >
-                    <option value="todos">Todos los alumnos / Padres</option>
-                    {alumnos.map((a) => (
-                      <option key={a.id} value={a.username}>
-                        {a.name} (@{a.username})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Tipo de documento
-                  </label>
-                  <select
-                    value={docType}
-                    onChange={(e) => setDocType(e.target.value)}
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
-                  >
-                    <option value="Propuesta">Propuesta personalizada</option>
-                    <option value="Normas">Normas de Método Kiru</option>
-                    <option value="Informe">Informe pedagógico</option>
-                    <option value="Otro">Otro documento</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="checkbox"
-                    id="requireSignCheck"
-                    checked={requiresSign}
-                    onChange={(e) => setRequiresSign(e.target.checked)}
-                    className="rounded border-slate-300 text-slate-900 focus:ring-0"
-                  />
-                  <label htmlFor="requireSignCheck" className="text-xs text-slate-600">
-                    Requiere confirmación de lectura
-                  </label>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
-                >
-                  <Plus className="w-4 h-4" /> Publicar Documento
-                </button>
-              </form>
-            </div>
-
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
-              <h2 className="font-serif text-base text-slate-900">Documentos Publicados ({documents.length})</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {documents.map((d) => (
-                  <div
-                    key={d.id}
-                    className="p-4 rounded-2xl border border-slate-100 bg-[#FAF8F5] flex flex-col justify-between space-y-3 shadow-sm"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          {d.type}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteDoc(d.id)}
-                          className="text-slate-400 hover:text-rose-600 transition"
-                          title="Eliminar documento"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                    {/* Previsualizaciones del Enlace o PDF adjunto en el panel de administración */}
+                    {(n.linkUrl || n.fileData) && (
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200/60">
+                        {n.linkUrl && (
+                          <a href={n.linkUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-[11px] font-semibold hover:bg-blue-100 transition">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>{n.linkTitle || "Abrir enlace"}</span>
+                          </a>
+                        )}
+                        {n.fileData && (
+                          <a href={n.fileData} download={n.fileName || "adjunto.pdf"} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold hover:bg-emerald-100 transition">
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Descargar PDF ({n.fileName})</span>
+                          </a>
+                        )}
                       </div>
-                      <h3 className="font-serif text-sm text-slate-900 font-medium mt-1">{d.title}</h3>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        Asignado a: <strong className="text-slate-700">{d.targetStudent === "todos" ? "Todos" : `@${d.targetStudent}`}</strong>
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-200/60 text-[10px]">
-                      {d.requiresAcceptance ? (
-                        <span className="text-amber-700 font-semibold flex items-center gap-1">
-                          ● Requiere confirmación familiar
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">Lectura informativa</span>
-                      )}
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -895,60 +998,25 @@ export default function AdminPage() {
                 <Edit3 className="w-4 h-4 text-emerald-800" />
                 <h3 className="font-serif text-lg text-slate-900">Editar Usuario</h3>
               </div>
-              <button
-                onClick={() => setEditingUser(null)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
             </div>
 
             <form onSubmit={handleUpdateUser} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Nombre completo
-                </label>
-                <input
-                  type="text"
-                  value={editingUser.name}
-                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
-                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                />
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nombre completo</label>
+                <input type="text" value={editingUser.name} onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none" />
               </div>
-
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Usuario
-                </label>
-                <input
-                  type="text"
-                  value={editingUser.username}
-                  onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
-                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                />
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Usuario</label>
+                <input type="text" value={editingUser.username} onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none" />
               </div>
-
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Contraseña
-                </label>
-                <input
-                  type="text"
-                  value={editingUser.password || ""}
-                  onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
-                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
-                />
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Contraseña</label>
+                <input type="text" value={editingUser.password || ""} onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-medium text-slate-900 focus:outline-none" />
               </div>
-
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Rol asignado
-                </label>
-                <select
-                  value={editingUser.role}
-                  onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
-                  className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-800"
-                >
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Rol asignado</label>
+                <select value={editingUser.role} onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })} className="w-full p-3 rounded-2xl border border-slate-200 bg-[#F7F6F3] text-xs font-semibold text-slate-900 focus:outline-none">
                   <option value="alumno">Alumno</option>
                   <option value="mentor">Mentor</option>
                   <option value="padre">Padre / Madre</option>
@@ -957,17 +1025,10 @@ export default function AdminPage() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingUser(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
-                >
+                <button type="button" onClick={() => setEditingUser(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition">
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-                >
+                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm">
                   <Save className="w-3.5 h-3.5" /> Guardar cambios
                 </button>
               </div>
