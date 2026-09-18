@@ -2,198 +2,247 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { 
   Users, 
-  Layers, 
   BookOpen, 
-  TrendingUp, 
-  Plus, 
-  Send, 
-  ExternalLink, 
-  Save, 
+  Sparkles, 
   CheckCircle2, 
-  X 
+  ExternalLink,
+  Save,
+  Eye,
+  Sliders,
+  Layers,
+  Plus
 } from "lucide-react";
+import { ENGLISH_A1_DATABASE, EnglishQuestion, EnglishConfig } from "@/lib/english-engine";
 
-interface UserAccount {
-  id: string;
-  name: string;
-  username: string;
-  role: string;
-}
+const ALL_SUBJECTS = [
+  { id: "geo", name: "Geografía" },
+  { id: "his", name: "Historia" },
+  { id: "fis", name: "Física" },
+  { id: "len", name: "Lengua y Literatura" },
+  { id: "ing", name: "Inglés" },
+  { id: "qui", name: "Química" },
+  { id: "bio", name: "Biología" }
+];
+
+const STUDENTS = [
+  { username: "carmen", name: "Carmen Fernández" },
+  { username: "alvaro", name: "Álvaro Ruiz" }
+];
 
 interface Flashcard {
   id: string;
+  category: string;
   term: string;
   definition: string;
-  category: string;
-  targetStudents: string[]; // usernames o "todos"
+  targetStudents?: string[];
 }
 
 export default function MentorPage() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"mehmiro" | "flashcards" | "asignaturas" | "estadisticas">("mehmiro");
-
-  const [students, setStudents] = useState<UserAccount[]>([
-    { id: "1", name: "Carmen Fernández", username: "carmen", role: "alumno" }
-  ]);
+  const [activeTab, setActiveTab] = useState<"asignaturas" | "flashcards" | "ingles">("asignaturas");
   const [selectedStudent, setSelectedStudent] = useState<string>("carmen");
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
-  // Notificación
-  const [msg, setMsg] = useState<string | null>(null);
+  // 1. Asignaturas visibles por alumno
+  const [studentSubjects, setStudentSubjects] = useState<Record<string, string[]>>({
+    carmen: ["geo", "his", "fis", "ing"],
+    alvaro: ["his", "len", "ing", "bio"]
+  });
 
-  // Estados Flashcards
-  const [cards, setCards] = useState<Flashcard[]>([]);
-  const [cardTerm, setCardTerm] = useState("");
-  const [cardDef, setCardDef] = useState("");
-  const [cardCategory, setCardCategory] = useState("Geografía");
-  const [selectedTargets, setSelectedTargets] = useState<string[]>(["carmen"]);
+  // 2. Generador masivo de Flashcards
+  const [bulkCategory, setBulkCategory] = useState("Geografía");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkTarget, setBulkTarget] = useState("todos");
 
-  // Estados Asignaturas
-  const [subjectId, setSubjectId] = useState("geo");
-  const [subjectNote, setSubjectNote] = useState("");
-  const [subjectLink, setSubjectLink] = useState("");
+  // 3. Configuración de Inglés A1
+  const [englishConfig, setEnglishConfig] = useState<EnglishConfig>({
+    studentUsername: "carmen",
+    selectedUnits: ["Unit 1: Introductions & To Be", "Unit 2: Daily Routines & Present Simple"],
+    selectedCategory: "Todas",
+    difficulty: "facil",
+    questionCount: 4
+  });
 
-  // Cargar datos
+  const [previewQuestions, setPreviewQuestions] = useState<EnglishQuestion[]>([]);
+
   useEffect(() => {
-    const customUsers = localStorage.getItem("kiru_custom_users");
-    if (customUsers) {
-      try {
-        const parsed: UserAccount[] = JSON.parse(customUsers);
-        const onlyStudents = parsed.filter((u) => u.role === "alumno");
-        if (onlyStudents.length > 0) {
-          setStudents(onlyStudents);
-          setSelectedStudent(onlyStudents[0].username);
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    const rawSubjs = localStorage.getItem("kiru_mentor_student_subjects");
+    if (rawSubjs) {
+      try { setStudentSubjects(JSON.parse(rawSubjs)); } catch (e) {}
     }
 
-    const savedCards = localStorage.getItem("kiru_custom_flashcards");
-    if (savedCards) {
+    const rawEng = localStorage.getItem(`kiru_english_cfg_${selectedStudent}`);
+    if (rawEng) {
       try {
-        setCards(JSON.parse(savedCards));
-      } catch (e) {
-        console.error(e);
-      }
+        setEnglishConfig(JSON.parse(rawEng));
+      } catch (e) {}
     }
-  }, []);
+  }, [selectedStudent]);
 
-  // Guardar y enviar Flashcard
-  const handleCreateFlashcard = (e: React.FormEvent) => {
+  useEffect(() => {
+    let pool = ENGLISH_A1_DATABASE;
+
+    if (englishConfig.selectedUnits.length > 0) {
+      pool = pool.filter((q) => englishConfig.selectedUnits.includes(q.unit));
+    }
+
+    if (englishConfig.selectedCategory !== "Todas") {
+      pool = pool.filter((q) => q.category === englishConfig.selectedCategory);
+    }
+
+    if (englishConfig.difficulty !== "todas") {
+      pool = pool.filter((q) => q.difficulty === englishConfig.difficulty);
+    }
+
+    if (pool.length === 0) pool = ENGLISH_A1_DATABASE;
+
+    setPreviewQuestions(pool.slice(0, englishConfig.questionCount));
+  }, [englishConfig]);
+
+  const handleToggleSubject = (subjectId: string) => {
+    const current = studentSubjects[selectedStudent] || [];
+    const updated = current.includes(subjectId)
+      ? current.filter((id) => id !== subjectId)
+      : [...current, subjectId];
+
+    const nextState = { ...studentSubjects, [selectedStudent]: updated };
+    setStudentSubjects(nextState);
+    localStorage.setItem("kiru_mentor_student_subjects", JSON.stringify(nextState));
+
+    setSavedMsg("Asignaturas actualizadas para este alumno.");
+    setTimeout(() => setSavedMsg(null), 3000);
+  };
+
+  // Creación masiva de Flashcards
+  const handleCreateBulkFlashcards = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cardTerm.trim() || !cardDef.trim() || selectedTargets.length === 0) return;
+    if (!bulkText.trim()) return;
 
-    const newCard: Flashcard = {
-      id: Date.now().toString(),
-      term: cardTerm.trim(),
-      definition: cardDef.trim(),
-      category: cardCategory,
-      targetStudents: selectedTargets,
-    };
+    const lines = bulkText.split("\n").filter((l) => l.trim().length > 0);
+    const newCards: Flashcard[] = [];
 
-    const updated = [newCard, ...cards];
-    setCards(updated);
+    lines.forEach((line, index) => {
+      // Soporta separador por dos puntos (:), guión (-) o tabulador
+      let parts = line.split(":");
+      if (parts.length < 2) parts = line.split(" - ");
+
+      if (parts.length >= 2) {
+        const term = parts[0].trim();
+        const definition = parts.slice(1).join(":").trim();
+        if (term && definition) {
+          newCards.push({
+            id: `${Date.now()}_${index}`,
+            category: bulkCategory,
+            term,
+            definition,
+            targetStudents: bulkTarget === "todos" ? ["carmen", "alvaro"] : [bulkTarget]
+          });
+        }
+      }
+    });
+
+    if (newCards.length === 0) {
+      alert("Por favor, usa el formato: Término: Definición (un concepto por línea)");
+      return;
+    }
+
+    const rawExisting = localStorage.getItem("kiru_custom_flashcards");
+    let existing: Flashcard[] = [];
+    if (rawExisting) {
+      try { existing = JSON.parse(rawExisting); } catch (e) {}
+    }
+
+    const updated = [...newCards, ...existing];
     localStorage.setItem("kiru_custom_flashcards", JSON.stringify(updated));
 
-    setCardTerm("");
-    setCardDef("");
-    setMsg("Flashcard creada y asignada con éxito.");
-    setTimeout(() => setMsg(null), 3000);
+    setBulkText("");
+    setSavedMsg(`Se han generado y enviado ${newCards.length} flashcards con éxito.`);
+    setTimeout(() => setSavedMsg(null), 4000);
   };
 
-  const toggleStudentSelection = (username: string) => {
-    if (selectedTargets.includes(username)) {
-      setSelectedTargets(selectedTargets.filter((u) => u !== username));
-    } else {
-      setSelectedTargets([...selectedTargets, username]);
-    }
-  };
-
-  // Guardar recurso de Asignatura
-  const handleSaveSubjectResource = (e: React.FormEvent) => {
+  const handleSaveEnglishConfig = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      subjectId,
-      note: subjectNote,
-      link: subjectLink,
-      updatedAt: new Date().toLocaleDateString("es-ES"),
-    };
-    localStorage.setItem(`kiru_resource_${subjectId}_${selectedStudent}`, JSON.stringify(payload));
-    setSubjectNote("");
-    setSubjectLink("");
-    setMsg("Recurso asignado correctamente al alumno.");
-    setTimeout(() => setMsg(null), 3000);
+    localStorage.setItem(`kiru_english_cfg_${selectedStudent}`, JSON.stringify(englishConfig));
+    setSavedMsg(`Configuración de Inglés A1 guardada para @${selectedStudent}.`);
+    setTimeout(() => setSavedMsg(null), 3000);
   };
+
+  const availableUnits = Array.from(new Set(ENGLISH_A1_DATABASE.map((q) => q.unit)));
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] pb-16 font-sans">
-      {/* Cabecera con botón de desconexión en negro */}
+    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans pb-16">
+      {/* Cabecera del Mentor */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold">
+          <div className="w-9 h-9 rounded-xl bg-blue-700 text-white flex items-center justify-center font-serif font-bold">
             M
           </div>
           <div>
-            <h1 className="font-serif text-xl sm:text-2xl text-slate-900 font-bold">Panel de Mentor</h1>
-            <p className="text-[11px] sm:text-xs text-slate-500">Gestión formativa y seguimiento de alumnos</p>
+            <h1 className="font-serif text-lg sm:text-xl text-slate-900 font-bold">Espacio del Mentor</h1>
+            <p className="text-[11px] text-slate-500">Personalización curricular y configuración de tareas</p>
           </div>
         </div>
 
-        <button
-          onClick={() => router.push("/")}
-          title="Cerrar sesión"
-          className="p-2 sm:p-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 transition shadow-sm"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-4 h-4 text-slate-900"
+        <div className="flex items-center gap-2">
+          {/* Acceso directo a Calcúlalo */}
+          <a
+            href="https://calculalo.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-xs"
           >
-            <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-            <line x1="12" y1="2" x2="12" y2="12" />
-          </svg>
-        </button>
+            <span>Calcúlalo</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+
+          <Link
+            href="/"
+            title="Cerrar sesión"
+            className="p-2 sm:p-2 rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 transition-colors shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-slate-900">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+              <line x1="12" y1="2" x2="12" y2="12" />
+            </svg>
+          </Link>
+        </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Notificación toast */}
-        {msg && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center justify-between shadow-sm">
-            <span>{msg}</span>
-            <button onClick={() => setMsg(null)}><X className="w-4 h-4" /></button>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Selector del alumno a gestionar */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-slate-500" />
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Alumno seleccionado:</span>
+          </div>
+
+          <div className="flex gap-2">
+            {STUDENTS.map((s) => (
+              <button
+                key={s.username}
+                onClick={() => setSelectedStudent(s.username)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs ${
+                  selectedStudent === s.username
+                    ? "bg-slate-900 text-white"
+                    : "bg-[#FAF8F5] text-slate-700 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                {s.name} (@{s.username})
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {savedMsg && (
+          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+            <span>{savedMsg}</span>
           </div>
         )}
 
-        {/* Barra superior de pestañas del mentor */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-wrap gap-2 shadow-sm text-xs font-semibold w-fit">
-          <button
-            onClick={() => setActiveTab("mehmiro")}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
-              activeTab === "mehmiro" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Mehmiro</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("flashcards")}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
-              activeTab === "flashcards" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Enviar Flashcards</span>
-          </button>
-
+        {/* Pestañas */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-wrap gap-2 w-fit shadow-sm text-xs font-semibold">
           <button
             onClick={() => setActiveTab("asignaturas")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
@@ -201,335 +250,290 @@ export default function MentorPage() {
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Asignaturas & Enlaces</span>
+            <span>Selección de Asignaturas</span>
           </button>
-
           <button
-            onClick={() => setActiveTab("estadisticas")}
+            onClick={() => setActiveTab("flashcards")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
-              activeTab === "estadisticas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+              activeTab === "flashcards" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
             }`}
           >
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>SkillCoins Semanales</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Generar Flashcards (Masivo)</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("ingles")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "ingles" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Motor de Inglés A1</span>
           </button>
         </div>
 
-        {/* PESTAÑA 1: MEHMIRO */}
-        {activeTab === "mehmiro" && (
-          <div className="space-y-5">
-            {/* Banner de integración oficial con Mehmiro */}
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plataforma Externa</span>
-                <h3 className="text-lg font-serif text-slate-900">Acceso a Mehmiro</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Gestiona las sesiones, fichas y reportes pedagógicos directamente en la app oficial de Mehmiro.
-                </p>
-              </div>
-
-              <a
-                href="https://app.mehmiro.com/login"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition shadow-sm w-fit"
-              >
-                <span>Abrir app.mehmiro.com</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-
+        {/* 1. SELECCIÓN DE ASIGNATURAS */}
+        {activeTab === "asignaturas" && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             <div>
-              <h2 className="text-xl font-serif text-slate-900">Alumnos Asignados</h2>
-              <p className="text-xs text-slate-500">Selecciona un alumno para revisar su estado y herramientas activas.</p>
+              <h2 className="text-xl font-serif text-slate-900 font-bold">Asignaturas Visibles para el Alumno</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Activa solo las asignaturas que cursa este alumno para evitar materias innecesarias en su panel.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {students.map((st) => (
-                <div
-                  key={st.id}
-                  onClick={() => setSelectedStudent(st.username)}
-                  className={`p-5 rounded-2xl border cursor-pointer transition shadow-sm space-y-3 ${
-                    selectedStudent === st.username
-                      ? "bg-white border-slate-900 ring-2 ring-slate-900/5"
-                      : "bg-white border-slate-200 hover:border-slate-400"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#FAF8F5] border border-slate-200 flex items-center justify-center font-bold text-slate-700">
-                      {st.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <h3 className="font-serif text-sm text-slate-900 font-medium">{st.name}</h3>
-                      <p className="text-[11px] text-slate-400 font-mono">@{st.username}</p>
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {ALL_SUBJECTS.map((sub) => {
+                const isSelected = (studentSubjects[selectedStudent] || []).includes(sub.id);
+                return (
+                  <div
+                    key={sub.id}
+                    onClick={() => handleToggleSubject(sub.id)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between select-none ${
+                      isSelected
+                        ? "bg-emerald-50/60 border-emerald-300 text-emerald-950 font-bold"
+                        : "bg-[#FAF8F5] border-slate-200 text-slate-600 hover:border-slate-300 font-medium"
+                    }`}
+                  >
+                    <span className="text-xs">{sub.name}</span>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      readOnly
+                      className="rounded text-emerald-700 focus:ring-0 cursor-pointer pointer-events-none"
+                    />
                   </div>
-
-                  <div className="pt-2 flex justify-between items-center text-[10px] text-slate-500 border-t border-slate-100">
-                    <span>Nivel: Explorador (1)</span>
-                    <a
-                      href="https://app.mehmiro.com/login"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-emerald-700 hover:underline font-bold inline-flex items-center gap-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <span>Ver en Mehmiro</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* PESTAÑA 2: FLASHCARDS (CREAR Y ENVIAR) */}
+        {/* 2. CREACIÓN MASIVA DE FLASHCARDS */}
         {activeTab === "flashcards" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Formulario */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-1 h-fit">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-800" />
-                <h3 className="font-serif text-base text-slate-900">Crear Flashcard</h3>
-              </div>
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+            <div>
+              <h2 className="text-xl font-serif text-slate-900 font-bold">Generador Masivo de Flashcards</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Pega una lista de conceptos y definiciones para generar hasta 30 tarjetas de golpe sin crearlas de una en una.
+              </p>
+            </div>
 
-              <form onSubmit={handleCreateFlashcard} className="space-y-3">
+            <form onSubmit={handleCreateBulkFlashcards} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Materia / Asignatura
+                    Asignatura de las tarjetas
                   </label>
                   <select
-                    value={cardCategory}
-                    onChange={(e) => setCardCategory(e.target.value)}
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
+                    value={bulkCategory}
+                    onChange={(e) => setBulkCategory(e.target.value)}
+                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-semibold"
                   >
                     <option value="Geografía">Geografía</option>
                     <option value="Historia">Historia</option>
                     <option value="Física">Física</option>
                     <option value="Lengua">Lengua</option>
                     <option value="Inglés">Inglés</option>
-                    <option value="Química">Química</option>
                     <option value="Biología">Biología</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Término / Concepto
+                    Enviar a
                   </label>
-                  <input
-                    type="text"
-                    value={cardTerm}
-                    onChange={(e) => setCardTerm(e.target.value)}
-                    placeholder="Ej: Afluente"
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Definición
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={cardDef}
-                    onChange={(e) => setCardDef(e.target.value)}
-                    placeholder="Definición clara y concisa..."
-                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                    Enviar a:
-                  </label>
-                  <div className="space-y-1.5 max-h-32 overflow-y-auto p-2 bg-[#FAF8F5] rounded-xl border border-slate-200 text-xs">
-                    {students.map((st) => (
-                      <label key={st.id} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedTargets.includes(st.username)}
-                          onChange={() => toggleStudentSelection(st.username)}
-                          className="rounded border-slate-300 text-slate-900 focus:ring-0"
-                        />
-                        <span>{st.name}</span>
-                      </label>
+                  <select
+                    value={bulkTarget}
+                    onChange={(e) => setBulkTarget(e.target.value)}
+                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-semibold"
+                  >
+                    <option value="todos">Todos los alumnos</option>
+                    {STUDENTS.map((s) => (
+                      <option key={s.username} value={s.username}>
+                        {s.name} (@{s.username})
+                      </option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
-                >
-                  <Send className="w-3.5 h-3.5" /> Crear y Enviar
-                </button>
-              </form>
-            </div>
-
-            {/* Listado de tarjetas enviadas */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
-              <h3 className="font-serif text-base text-slate-900">Flashcards Creadas ({cards.length})</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {cards.map((c) => (
-                  <div key={c.id} className="p-4 rounded-2xl border border-slate-100 bg-[#FAF8F5] space-y-2 shadow-sm">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700">
-                        {c.category}
-                      </span>
-                      <span className="text-[10px] text-slate-400">
-                        {c.targetStudents.length} alumno(s)
-                      </span>
-                    </div>
-                    <h4 className="font-serif text-sm text-slate-900 font-bold">{c.term}</h4>
-                    <p className="text-xs text-slate-600 leading-relaxed">{c.definition}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* PESTAÑA 3: ASIGNATURAS Y ENLACES */}
-        {activeTab === "asignaturas" && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 max-w-xl">
-            <div>
-              <h3 className="font-serif text-base text-slate-900">Recomendaciones por Asignatura</h3>
-              <p className="text-xs text-slate-500">Envía notas pedagógicas y enlaces a vídeos o actividades para el alumno.</p>
-            </div>
-
-            <form onSubmit={handleSaveSubjectResource} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Alumno Destinatario
-                </label>
-                <select
-                  value={selectedStudent}
-                  onChange={(e) => setSelectedStudent(e.target.value)}
-                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
-                >
-                  {students.map((st) => (
-                    <option key={st.id} value={st.username}>
-                      {st.name} (@{st.username})
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Asignatura
-                </label>
-                <select
-                  value={subjectId}
-                  onChange={(e) => setSubjectId(e.target.value)}
-                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
-                >
-                  <option value="geo">Geografía</option>
-                  <option value="his">Historia</option>
-                  <option value="fis">Física</option>
-                  <option value="len">Lengua</option>
-                  <option value="ing">Inglés</option>
-                  <option value="qui">Química</option>
-                  <option value="bio">Biología</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Recomendación o Mensaje
+                  Lista de conceptos (Formato: Concepto: Definición)
                 </label>
                 <textarea
-                  rows={3}
-                  value={subjectNote}
-                  onChange={(e) => setSubjectNote(e.target.value)}
-                  placeholder="Ej: Revisa el vídeo del canal antes de la sesión del jueves."
-                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
+                  rows={7}
+                  value={bulkText}
+                  onChange={(e) => setBulkText(e.target.value)}
+                  placeholder={`Meseta: Planicie extensa situada a considerable altura.\nDelta: Terreno comprendido entre los brazos de un río en su desembocadura.\n1492: Descubrimiento de América por Cristóbal Colón.\nInercia: Propiedad de los cuerpos de mantener su estado de reposo.`}
+                  className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-2xl text-xs font-mono text-slate-800 leading-relaxed focus:outline-none"
                   required
                 />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Enlace opcional (YouTube, documento, etc.)
-                </label>
-                <input
-                  type="url"
-                  value={subjectLink}
-                  onChange={(e) => setSubjectLink(e.target.value)}
-                  placeholder="https://youtube.com/..."
-                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
-                />
+                <span className="text-[11px] text-slate-400 block mt-1">
+                  * Un concepto por cada línea. Puedes pegar hasta 30 líneas a la vez.
+                </span>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
+                className="px-6 py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-2 shadow-sm"
               >
-                <Save className="w-3.5 h-3.5" /> Asignar Recurso
+                <Plus className="w-4 h-4" /> Generar y Enviar Flashcards a los Alumnos
               </button>
             </form>
           </div>
         )}
 
-        {/* PESTAÑA 4: SKILLCOINS SEMANALES */}
-        {activeTab === "estadisticas" && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-5 max-w-md">
-            <div>
-              <h3 className="font-serif text-base text-slate-900">SkillCoins Semanales (No acumuladas)</h3>
-              <p className="text-xs text-slate-500">
-                Registra las SkillCoins logradas por el alumno en la última sesión semanal.
-              </p>
-            </div>
+        {/* 3. MOTOR DE INGLÉS A1 */}
+        {activeTab === "ingles" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <form onSubmit={handleSaveEnglishConfig} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-slate-700" />
+                <h3 className="font-serif text-base text-slate-900 font-bold">Configuración de Ejercicios A1</h3>
+              </div>
 
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Alumno
-              </label>
-              <select
-                value={selectedStudent}
-                onChange={(e) => setSelectedStudent(e.target.value)}
-                className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
-              >
-                {students.map((st) => (
-                  <option key={st.id} value={st.username}>
-                    {st.name} (@{st.username})
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Nivel de Dificultad
+                </label>
+                <div className="grid grid-cols-4 gap-1.5 text-xs">
+                  {[
+                    { id: "facil", label: "Fácil" },
+                    { id: "medio", label: "Medio" },
+                    { id: "desafiante", label: "Desafío" },
+                    { id: "todas", label: "Mixto" }
+                  ].map((d) => (
+                    <button
+                      type="button"
+                      key={d.id}
+                      onClick={() => setEnglishConfig({ ...englishConfig, difficulty: d.id as any })}
+                      className={`py-2 rounded-xl font-bold transition border ${
+                        englishConfig.difficulty === d.id
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-[#FAF8F5] text-slate-700 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Ej: 5"
-                id="weeklyCoinsInput"
-                className="w-28 p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-slate-800"
-              />
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <label className="font-bold uppercase tracking-wider text-slate-500 text-[11px]">
+                    Cantidad de Ejercicios
+                  </label>
+                  <span className="font-bold text-slate-900">{englishConfig.questionCount} ejercicios</span>
+                </div>
+                <input
+                  type="range"
+                  min={3}
+                  max={8}
+                  value={englishConfig.questionCount}
+                  onChange={(e) => setEnglishConfig({ ...englishConfig, questionCount: Number(e.target.value) })}
+                  className="w-full accent-slate-900 cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Área de Ejercicios
+                </label>
+                <select
+                  value={englishConfig.selectedCategory}
+                  onChange={(e) => setEnglishConfig({ ...englishConfig, selectedCategory: e.target.value })}
+                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"
+                >
+                  <option value="Todas">Todas las áreas (Grammar, Vocab, Everyday)</option>
+                  <option value="Grammar">Gramática</option>
+                  <option value="Vocabulary">Vocabulario temático</option>
+                  <option value="Everyday English">Inglés funcional y cotidiano</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Unidades Curriculares A1
+                </label>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {availableUnits.map((unit) => {
+                    const isChecked = englishConfig.selectedUnits.includes(unit);
+                    return (
+                      <label
+                        key={unit}
+                        className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-[#FAF8F5] text-xs font-medium cursor-pointer hover:bg-slate-100 transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {
+                            const updated = isChecked
+                              ? englishConfig.selectedUnits.filter((u) => u !== unit)
+                              : [...englishConfig.selectedUnits, unit];
+                            setEnglishConfig({ ...englishConfig, selectedUnits: updated });
+                          }}
+                          className="rounded text-slate-900 focus:ring-0"
+                        />
+                        <span className="text-slate-800">{unit}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               <button
-                type="button"
-                onClick={() => {
-                  const input = document.getElementById("weeklyCoinsInput") as HTMLInputElement;
-                  if (input && input.value) {
-                    const val = parseInt(input.value);
-                    const today = new Date().toLocaleDateString("es-ES");
-                    localStorage.setItem(`kiru_sc_${selectedStudent}`, JSON.stringify({ coins: val, date: today }));
-                    setMsg(`Guardado: ${val} SC asignadas el ${today}`);
-                    setTimeout(() => setMsg(null), 3000);
-                  }
-                }}
-                className="px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition shadow-sm"
+                type="submit"
+                className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
               >
-                Guardar semana
+                <Save className="w-4 h-4" /> Asignar Tanda de Ejercicios al Alumno
               </button>
-            </div>
+            </form>
 
-            <p className="text-[11px] text-slate-400 italic">
-              Actualizado automáticamente en la vista de progreso del alumno y la familia.
-            </p>
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-emerald-800" />
+                <h3 className="font-serif text-base text-slate-900 font-bold">
+                  Previsualización ({previewQuestions.length} ejercicios)
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500">
+                Así verá los ejercicios el alumno en su panel:
+              </p>
+
+              <div className="space-y-3 max-h-[440px] overflow-y-auto pr-1">
+                {previewQuestions.map((q, idx) => (
+                  <div key={q.id} className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-slate-200 space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase">
+                      <span>{q.category} · {q.difficulty}</span>
+                      <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        {q.unit.split(":")[0]}
+                      </span>
+                    </div>
+
+                    <p className="font-semibold text-slate-800">
+                      {idx + 1}. {q.prompt}
+                    </p>
+
+                    {q.type === "multiple-choice" && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {q.options?.map((opt, i) => (
+                          <span key={i} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-600">
+                            {opt}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <span className="text-[10px] text-slate-400 block pt-1">
+                      Respuesta esperada: <strong className="text-slate-600">{q.correctAnswers.join(" / ")}</strong>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </main>
