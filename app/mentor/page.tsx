@@ -12,14 +12,17 @@ import {
   Eye,
   Sliders,
   Layers,
-  Plus
+  Plus,
+  Send,
+  Award
 } from "lucide-react";
 import { ENGLISH_A1_DATABASE, EnglishQuestion, EnglishConfig } from "@/lib/english-engine";
+import SkillCoinsChart from "@/components/SkillCoinsChart";
 
 const ALL_SUBJECTS = [
   { id: "geo", name: "Geografía" },
   { id: "his", name: "Historia" },
-  { id: "fis", name: "Física" },
+  { id: "fis", name: "Física y Química" },
   { id: "len", name: "Lengua y Literatura" },
   { id: "ing", name: "Inglés" },
   { id: "qui", name: "Química" },
@@ -39,23 +42,38 @@ interface Flashcard {
   targetStudents?: string[];
 }
 
+interface MentorSubjectMessage {
+  id: string;
+  studentId: string;
+  subjectId: string;
+  text: string;
+  link?: string;
+  date: string;
+}
+
 export default function MentorPage() {
-  const [activeTab, setActiveTab] = useState<"asignaturas" | "flashcards" | "ingles">("asignaturas");
+  const [activeTab, setActiveTab] = useState<"asignaturas" | "envio_recursos" | "flashcards" | "ingles" | "skillcoins">("asignaturas");
   const [selectedStudent, setSelectedStudent] = useState<string>("carmen");
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
   // 1. Asignaturas visibles por alumno
   const [studentSubjects, setStudentSubjects] = useState<Record<string, string[]>>({
-    carmen: ["geo", "his", "fis", "ing"],
+    carmen: ["geo", "his", "fis", "ing", "len"],
     alvaro: ["his", "len", "ing", "bio"]
   });
 
-  // 2. Generador masivo de Flashcards
+  // 2. Enviar mensaje y enlace/archivo por asignatura (Subrayado en verde)
+  const [msgSubject, setMsgSubject] = useState("geo");
+  const [msgTarget, setMsgTarget] = useState("carmen");
+  const [msgText, setMsgText] = useState("");
+  const [msgLink, setMsgLink] = useState("");
+
+  // 3. Generador masivo de Flashcards (hasta 30)
   const [bulkCategory, setBulkCategory] = useState("Geografía");
   const [bulkText, setBulkText] = useState("");
   const [bulkTarget, setBulkTarget] = useState("todos");
 
-  // 3. Configuración de Inglés A1
+  // 4. Configuración de Inglés A1
   const [englishConfig, setEnglishConfig] = useState<EnglishConfig>({
     studentUsername: "carmen",
     selectedUnits: ["Unit 1: Introductions & To Be", "Unit 2: Daily Routines & Present Simple"],
@@ -63,8 +81,15 @@ export default function MentorPage() {
     difficulty: "facil",
     questionCount: 4
   });
-
   const [previewQuestions, setPreviewQuestions] = useState<EnglishQuestion[]>([]);
+
+  // 5. SkillCoins del alumno seleccionado
+  const [studentSC, setStudentSC] = useState({
+    estudios: 8,
+    compromiso: 9,
+    organizacion: 7,
+    bienestar: 9
+  });
 
   useEffect(() => {
     const rawSubjs = localStorage.getItem("kiru_mentor_student_subjects");
@@ -76,6 +101,19 @@ export default function MentorPage() {
     if (rawEng) {
       try {
         setEnglishConfig(JSON.parse(rawEng));
+      } catch (e) {}
+    }
+
+    const rawSC = localStorage.getItem(`kiru_sc_${selectedStudent}`);
+    if (rawSC) {
+      try {
+        const parsed = JSON.parse(rawSC);
+        setStudentSC({
+          estudios: parsed.estudios ?? 8,
+          compromiso: parsed.compromiso ?? 9,
+          organizacion: parsed.organizacion ?? 7,
+          bienestar: parsed.bienestar ?? 9
+        });
       } catch (e) {}
     }
   }, [selectedStudent]);
@@ -114,6 +152,38 @@ export default function MentorPage() {
     setTimeout(() => setSavedMsg(null), 3000);
   };
 
+  // Enviar mensaje y enlace/archivo por asignatura (Requisito verde Sprint 2)
+  const handleSendSubjectMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!msgText.trim()) return;
+
+    const raw = localStorage.getItem("kiru_mentor_subject_messages");
+    let list: MentorSubjectMessage[] = [];
+    if (raw) {
+      try { list = JSON.parse(raw); } catch (err) {}
+    }
+
+    const targets = msgTarget === "todos" ? STUDENTS.map((s) => s.username) : [msgTarget];
+    const now = new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" });
+
+    targets.forEach((st) => {
+      list.unshift({
+        id: `${Date.now()}_${st}`,
+        studentId: st,
+        subjectId: msgSubject,
+        text: msgText.trim(),
+        link: msgLink.trim() || undefined,
+        date: now
+      });
+    });
+
+    localStorage.setItem("kiru_mentor_subject_messages", JSON.stringify(list));
+    setMsgText("");
+    setMsgLink("");
+    setSavedMsg("Recomendación enviada y publicada en la asignatura del alumno.");
+    setTimeout(() => setSavedMsg(null), 3500);
+  };
+
   // Creación masiva de Flashcards
   const handleCreateBulkFlashcards = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +193,6 @@ export default function MentorPage() {
     const newCards: Flashcard[] = [];
 
     lines.forEach((line, index) => {
-      // Soporta separador por dos puntos (:), guión (-) o tabulador
       let parts = line.split(":");
       if (parts.length < 2) parts = line.split(" - ");
 
@@ -143,7 +212,7 @@ export default function MentorPage() {
     });
 
     if (newCards.length === 0) {
-      alert("Por favor, usa el formato: Término: Definición (un concepto por línea)");
+      alert("Por favor, usa el formato: Término - Definición (un concepto por línea)");
       return;
     }
 
@@ -168,14 +237,25 @@ export default function MentorPage() {
     setTimeout(() => setSavedMsg(null), 3000);
   };
 
+  const handleUpdateSC = (field: "estudios" | "compromiso" | "organizacion" | "bienestar", val: number) => {
+    const updated = { ...studentSC, [field]: Math.max(0, Math.min(10, val)) };
+    setStudentSC(updated);
+    localStorage.setItem(`kiru_sc_${selectedStudent}`, JSON.stringify({
+      ...updated,
+      updatedAt: new Date().toLocaleDateString("es-ES", { day: "numeric", month: "numeric", year: "2-digit" })
+    }));
+    setSavedMsg(`SkillCoins de @${selectedStudent} actualizadas.`);
+    setTimeout(() => setSavedMsg(null), 2500);
+  };
+
   const availableUnits = Array.from(new Set(ENGLISH_A1_DATABASE.map((q) => q.unit)));
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans pb-16">
-      {/* Cabecera del Mentor */}
-      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+      {/* Cabecera del Mentor con botón de apagado en negro */}
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-700 text-white flex items-center justify-center font-serif font-bold">
+          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold">
             M
           </div>
           <div>
@@ -190,18 +270,18 @@ export default function MentorPage() {
             href="https://calculalo.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-800 text-xs font-semibold hover:bg-slate-200 transition shadow-xs"
           >
             <span>Calcúlalo</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
           </a>
 
           <Link
             href="/"
             title="Cerrar sesión"
-            className="p-2 sm:p-2 rounded-xl border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 transition-colors shadow-sm"
+            className="p-2 sm:p-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition shadow-xs flex items-center justify-center"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-slate-900">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
               <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
               <line x1="12" y1="2" x2="12" y2="12" />
             </svg>
@@ -211,7 +291,7 @@ export default function MentorPage() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Selector del alumno a gestionar */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-slate-500" />
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Alumno seleccionado:</span>
@@ -241,42 +321,60 @@ export default function MentorPage() {
           </div>
         )}
 
-        {/* Pestañas */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-wrap gap-2 w-fit shadow-sm text-xs font-semibold">
+        {/* Barra de pestañas */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-wrap gap-2 w-fit shadow-xs text-xs font-semibold">
           <button
             onClick={() => setActiveTab("asignaturas")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
-              activeTab === "asignaturas" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+              activeTab === "asignaturas" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:bg-slate-50"
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>Selección de Asignaturas</span>
           </button>
           <button
+            onClick={() => setActiveTab("envio_recursos")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "envio_recursos" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Asignaturas (Enviar Recursos)</span>
+          </button>
+          <button
             onClick={() => setActiveTab("flashcards")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
-              activeTab === "flashcards" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+              activeTab === "flashcards" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:bg-slate-50"
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Generar Flashcards (Masivo)</span>
+            <span>Generar Flashcards</span>
           </button>
           <button
             onClick={() => setActiveTab("ingles")}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
-              activeTab === "ingles" ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"
+              activeTab === "ingles" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:bg-slate-50"
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Motor de Inglés A1</span>
           </button>
+          <button
+            onClick={() => setActiveTab("skillcoins")}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition ${
+              activeTab === "skillcoins" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            <Award className="w-3.5 h-3.5" />
+            <span>SkillCoins & Gráficas</span>
+          </button>
         </div>
 
-        {/* 1. SELECCIÓN DE ASIGNATURAS */}
+        {/* 1. SELECCIÓN DE ASIGNATURAS VISIBLES */}
         {activeTab === "asignaturas" && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
             <div>
-              <h2 className="text-xl font-serif text-slate-900 font-bold">Asignaturas Visibles para el Alumno</h2>
+              <h2 className="text-xl font-serif text-slate-900 font-bold">Asignaturas Visibles para @{selectedStudent}</h2>
               <p className="text-xs text-slate-500 mt-1">
                 Activa solo las asignaturas que cursa este alumno para evitar materias innecesarias en su panel.
               </p>
@@ -309,9 +407,96 @@ export default function MentorPage() {
           </div>
         )}
 
-        {/* 2. CREACIÓN MASIVA DE FLASHCARDS */}
+        {/* 2. ENVIAR RECURSOS POR ASIGNATURA (SUBRAYADO EN VERDE EN EL SPRINT 2) */}
+        {activeTab === "envio_recursos" && (
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-5 animate-in fade-in duration-150">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                Sección Asignaturas
+              </span>
+              <h2 className="text-xl font-serif text-slate-900 font-bold mt-1.5">
+                Enviar Recomendaciones y Enlaces por Asignatura
+              </h2>
+              <p className="text-xs text-slate-500">
+                Escribe una recomendación y adjunta un enlace (vídeos de YouTube, mapas interactivos o guías) para que aparezca en el espacio de la asignatura del alumno.
+              </p>
+            </div>
+
+            <form onSubmit={handleSendSubjectMessage} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Asignatura
+                  </label>
+                  <select
+                    value={msgSubject}
+                    onChange={(e) => setMsgSubject(e.target.value)}
+                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none"
+                  >
+                    {ALL_SUBJECTS.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Enviar a
+                  </label>
+                  <select
+                    value={msgTarget}
+                    onChange={(e) => setMsgTarget(e.target.value)}
+                    className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none"
+                  >
+                    <option value="todos">Todos los alumnos</option>
+                    {STUDENTS.map((s) => (
+                      <option key={s.username} value={s.username}>{s.name} (@{s.username})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Mensaje / Recomendación Pedagógica
+                </label>
+                <textarea
+                  rows={3}
+                  value={msgText}
+                  onChange={(e) => setMsgText(e.target.value)}
+                  placeholder="Ej: Mira este vídeo sobre el relieve peninsular antes de nuestra sesión del jueves..."
+                  className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-2xl text-xs text-slate-800 focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  Enlace externo o recurso (Opcional)
+                </label>
+                <input
+                  type="url"
+                  value={msgLink}
+                  onChange={(e) => setMsgLink(e.target.value)}
+                  placeholder="https://youtube.com/... o https://geoguessr.com/..."
+                  className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition flex items-center gap-2 shadow-xs"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Publicar en la asignatura del alumno</span>
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* 3. CREACIÓN MASIVA DE FLASHCARDS */}
         {activeTab === "flashcards" && (
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-5">
             <div>
               <h2 className="text-xl font-serif text-slate-900 font-bold">Generador Masivo de Flashcards</h2>
               <p className="text-xs text-slate-500 mt-1">
@@ -332,7 +517,7 @@ export default function MentorPage() {
                   >
                     <option value="Geografía">Geografía</option>
                     <option value="Historia">Historia</option>
-                    <option value="Física">Física</option>
+                    <option value="Física">Física y Química</option>
                     <option value="Lengua">Lengua</option>
                     <option value="Inglés">Inglés</option>
                     <option value="Biología">Biología</option>
@@ -360,7 +545,7 @@ export default function MentorPage() {
 
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Lista de conceptos (Formato: Concepto: Definición)
+                  Lista de conceptos (Formato: Concepto: Definición o Concepto - Definición)
                 </label>
                 <textarea
                   rows={7}
@@ -377,7 +562,7 @@ export default function MentorPage() {
 
               <button
                 type="submit"
-                className="px-6 py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-2 shadow-sm"
+                className="px-6 py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-2 shadow-xs"
               >
                 <Plus className="w-4 h-4" /> Generar y Enviar Flashcards a los Alumnos
               </button>
@@ -385,10 +570,10 @@ export default function MentorPage() {
           </div>
         )}
 
-        {/* 3. MOTOR DE INGLÉS A1 */}
+        {/* 4. MOTOR DE INGLÉS A1 */}
         {activeTab === "ingles" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <form onSubmit={handleSaveEnglishConfig} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+            <form onSubmit={handleSaveEnglishConfig} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-slate-700" />
                 <h3 className="font-serif text-base text-slate-900 font-bold">Configuración de Ejercicios A1</h3>
@@ -486,13 +671,13 @@ export default function MentorPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm"
+                className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-xs"
               >
                 <Save className="w-4 h-4" /> Asignar Tanda de Ejercicios al Alumno
               </button>
             </form>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
               <div className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-emerald-800" />
                 <h3 className="font-serif text-base text-slate-900 font-bold">
@@ -533,6 +718,47 @@ export default function MentorPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. SKILLCOINS MANUALES Y 4 GRÁFICAS EVOLUTIVAS */}
+        {activeTab === "skillcoins" && (
+          <div className="space-y-6 animate-in fade-in duration-150">
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-slate-900">
+                    Editar SkillCoins de @{selectedStudent}
+                  </h3>
+                  <p className="text-xs text-slate-500">Puntúa semanalmente de 0 a 10 cada categoría tras la sesión.</p>
+                </div>
+                <span className="text-[10px] text-slate-400 font-semibold">Actualizado el 12/5/26</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {(["estudios", "compromiso", "organizacion", "bienestar"] as const).map((cat) => (
+                  <div key={cat} className="p-3.5 bg-[#FAF8F5] border border-slate-200 rounded-2xl space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block capitalize">{cat}</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={studentSC[cat]}
+                        onChange={(e) => handleUpdateSC(cat, parseInt(e.target.value) || 0)}
+                        className="w-16 p-2 bg-white border border-slate-200 rounded-xl text-center text-sm font-bold text-slate-800"
+                      />
+                      <span className="text-xs text-slate-400 font-semibold">/ 10 SC</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 4 Gráficas evolutivas en tonos pastel */}
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+              <SkillCoinsChart />
             </div>
           </div>
         )}
