@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   CheckCircle2, 
@@ -12,6 +13,7 @@ import {
   AlertCircle,
   ExternalLink 
 } from "lucide-react";
+import SkillCoinsChart from "@/components/SkillCoinsChart";
 
 interface Child {
   name: string;
@@ -68,6 +70,9 @@ export default function PadrePage() {
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [activeTab, setActiveTab] = useState<"inicio" | "progreso" | "documentos" | "pagos">("inicio");
 
+  // Lista dinámica de hijos que detecta nuevos alumnos creados
+  const [childrenList, setChildrenList] = useState<Child[]>(DEFAULT_CHILDREN);
+
   // Estado de aceptaciones de documentos firmados
   const [acceptedLog, setAcceptedLog] = useState<Record<string, { user: string; date: string }>>({});
 
@@ -86,7 +91,25 @@ export default function PadrePage() {
   });
 
   useEffect(() => {
-    // 1. Cargar documentos
+    // 1. Cargar alumnos dinámicos registrados
+    const rawUsers = localStorage.getItem("kiru_custom_users");
+    if (rawUsers) {
+      try {
+        const parsed = JSON.parse(rawUsers);
+        const students = parsed.filter((u: any) => u.role === "alumno");
+        if (students.length > 0) {
+          const mapped = students.map((s: any) => ({
+            name: s.name.split(" ")[0],
+            username: s.username,
+            avatarUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80",
+            level: "Explorador (1)"
+          }));
+          setChildrenList(mapped);
+        }
+      } catch (e) {}
+    }
+
+    // 2. Cargar documentos
     const rawDocs = localStorage.getItem("kiru_admin_docs");
     if (rawDocs) {
       try { setDocs(JSON.parse(rawDocs)); } catch (e) {}
@@ -111,7 +134,7 @@ export default function PadrePage() {
       ]);
     }
 
-    // 2. Cargar avisos
+    // 3. Cargar avisos
     const rawNotices = localStorage.getItem("kiru_admin_notices");
     if (rawNotices) {
       try { setNotices(JSON.parse(rawNotices)); } catch (e) {}
@@ -127,7 +150,7 @@ export default function PadrePage() {
       ]);
     }
 
-    // 3. Cargar pagos
+    // 4. Cargar pagos
     const rawPayments = localStorage.getItem("kiru_admin_payments");
     if (rawPayments) {
       try { setPayments(JSON.parse(rawPayments)); } catch (e) {}
@@ -154,16 +177,16 @@ export default function PadrePage() {
       ]);
     }
 
-    // 4. Cargar registro de firmas
+    // 5. Cargar registro de firmas
     const rawAccepted = localStorage.getItem("kiru_accepted_docs_log");
     if (rawAccepted) {
       try { setAcceptedLog(JSON.parse(rawAccepted)); } catch (e) {}
     }
 
-    // 5. Cargar SkillCoins en vivo de Google Sheets
+    // 6. Cargar SkillCoins en vivo de Google Sheets
     const fetchSheetData = async () => {
       try {
-        const sheetUrl = "https://docs.google.com/spreadsheets/d/1bgZYmXc4uol1GvfyD7QaAIdnK37OG3hLC27jMVg6A1c/gviz/tq?tqx=out:json";
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/1bgZYmXc4uol1GvfyD7QaAldnK37OG3hLC27jMVg6A1c/gviz/tq?tqx=out:json";
         const res = await fetch(sheetUrl);
         const text = await res.text();
         const jsonText = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
@@ -184,9 +207,7 @@ export default function PadrePage() {
             updatedAt: dateStr
           });
         }
-      } catch (e) {
-        console.log("Cargando SC locales de familia");
-      }
+      } catch (e) {}
     };
 
     fetchSheetData();
@@ -225,10 +246,6 @@ export default function PadrePage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans pb-16 selection:bg-slate-200">
       
-      {/* ─────────────────────────────────────────────────────────────
-          PANTALLA 1: INICIO (SELECCIÓN DE HIJOS)
-          Barra superior únicamente con el botón de cerrar sesión a la izquierda.
-      ───────────────────────────────────────────────────────────── */}
       {!selectedChild ? (
         <div className="max-w-md mx-auto px-4 sm:px-6 pt-5 space-y-6">
           <header className="flex items-center justify-between pb-3">
@@ -264,7 +281,7 @@ export default function PadrePage() {
           </div>
 
           <div className="space-y-3 pt-2">
-            {DEFAULT_CHILDREN.map((child) => (
+            {childrenList.map((child) => (
               <div
                 key={child.username}
                 onClick={() => {
@@ -278,7 +295,6 @@ export default function PadrePage() {
                   <p className="text-xs text-slate-500 font-medium">{child.level}</p>
                 </div>
 
-                {/* Avatar redondeado del alumno */}
                 <div className="relative">
                   <img
                     src={child.avatarUrl}
@@ -291,15 +307,8 @@ export default function PadrePage() {
           </div>
         </div>
       ) : (
-
-        /* ─────────────────────────────────────────────────────────────
-            PANTALLA 2: PERFIL INDIVIDUAL DEL HIJO
-            Barra superior: Inicio | Progreso | Mis documentos | Mis pagos | Cerrar sesión
-            Y a la derecha el botón de volver: Inicio / Mis hijos
-        ───────────────────────────────────────────────────────────── */
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
           
-          {/* Cabecera superior interna */}
           <header className="bg-white rounded-2xl border border-slate-200 p-2 flex items-center justify-between shadow-sm sticky top-3 z-30">
             <div className="flex items-center gap-1 overflow-x-auto text-[11px] sm:text-xs font-semibold scrollbar-none py-0.5">
               <button
@@ -355,7 +364,6 @@ export default function PadrePage() {
               </button>
             </div>
 
-            {/* Botón Inicio / Mis hijos a la derecha */}
             <button
               onClick={() => setSelectedChild(null)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF8F5] border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition shrink-0 ml-2"
@@ -365,7 +373,6 @@ export default function PadrePage() {
             </button>
           </header>
 
-          {/* Ficha resumen del hijo activo */}
           <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-3.5">
               <img
@@ -384,7 +391,6 @@ export default function PadrePage() {
             </span>
           </div>
 
-          {/* 1. SECCIÓN INICIO & AVISOS */}
           {activeTab === "inicio" && (
             <div className="space-y-4">
               <div className="space-y-1">
@@ -413,7 +419,6 @@ export default function PadrePage() {
                 </div>
               )}
 
-              {/* Registro de incidencias preparado */}
               <div className="bg-[#FAF8F5] p-4 rounded-2xl border border-slate-200/80 text-[11px] text-slate-500 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
                 <span>Las incidencias de las sesiones se actualizarán automáticamente aquí tras cada registro de sesión del mentor.</span>
@@ -421,7 +426,6 @@ export default function PadrePage() {
             </div>
           )}
 
-          {/* 2. SECCIÓN PROGRESO (GRÁFICAS / SKILLCOINS SEMANALES) */}
           {activeTab === "progreso" && (
             <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-5">
               <div className="flex justify-between items-center">
@@ -458,13 +462,12 @@ export default function PadrePage() {
                 </div>
               </div>
 
-              <p className="text-[11px] text-slate-400 italic">
-                * Los informes de evolución y estadísticas gráficas se completarán conforme avance el trimestre.
-              </p>
+              <div className="pt-4 border-t border-slate-100">
+                <SkillCoinsChart />
+              </div>
             </div>
           )}
 
-          {/* 3. SECCIÓN MIS DOCUMENTOS */}
           {activeTab === "documentos" && (
             <div className="space-y-4">
               <div className="space-y-1">
@@ -497,7 +500,6 @@ export default function PadrePage() {
                           {doc.title}
                         </h4>
 
-                        {/* Previsualización visual del PDF limpia y bonita */}
                         <div className="w-full h-28 bg-[#FAF8F5] border border-slate-200 rounded-2xl flex flex-col items-center justify-center p-3 text-center space-y-1 shadow-inner">
                           <FileText className="w-7 h-7 text-slate-400" />
                           <span className="text-[11px] font-medium text-slate-500 truncate max-w-[180px]">
@@ -508,7 +510,6 @@ export default function PadrePage() {
                       </div>
 
                       <div className="space-y-2 pt-2 border-t border-slate-100">
-                        {/* Botón Abrir documento */}
                         {doc.fileData ? (
                           <a
                             href={doc.fileData}
@@ -529,7 +530,6 @@ export default function PadrePage() {
                           </button>
                         )}
 
-                        {/* Módulo de Aceptación */}
                         {doc.requiresAcceptance && (
                           <div className="pt-1">
                             {isAccepted ? (
@@ -560,7 +560,6 @@ export default function PadrePage() {
             </div>
           )}
 
-          {/* 4. SECCIÓN MIS PAGOS */}
           {activeTab === "pagos" && (
             <div className="space-y-4">
               <div className="space-y-1">
@@ -568,7 +567,6 @@ export default function PadrePage() {
                 <p className="text-xs text-slate-500">Historial de facturación y cuotas de acompañamiento.</p>
               </div>
 
-              {/* Tarjeta Próximo Pago */}
               {pendingPayment && (
                 <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -595,7 +593,6 @@ export default function PadrePage() {
                 </div>
               )}
 
-              {/* Tabla Historial de Pagos */}
               <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-3">
                 <h4 className="font-serif text-sm font-bold text-slate-900">Historial de pagos</h4>
                 <div className="overflow-x-auto">
