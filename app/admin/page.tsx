@@ -256,7 +256,7 @@ export default function AdminPage() {
     }
   };
 
-  // Crear usuario
+  // Crear usuario con vinculación automática a padres
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !username.trim() || !password.trim()) {
@@ -277,6 +277,7 @@ export default function AdminPage() {
       password: password.trim(),
       role,
       createdAt: new Date().toISOString().split("T")[0],
+      assignedParent: role === "alumno" ? "familia" : undefined, // Vincula automáticamente el alumno nuevo a la familia
     };
 
     const updated = [newUser, ...users];
@@ -359,13 +360,6 @@ export default function AdminPage() {
       text: `Vinculación guardada: @${selectedStudent} asignado/a a @${selectedMentor}.`, 
       type: "success" 
     });
-    setTimeout(() => setMsg(null), 4000);
-  };
-
-  const handleRemoveLink = (studentUsername: string) => {
-    const updatedLinks = links.filter(l => l.studentUsername !== studentUsername);
-    saveLinksToStorage(updatedLinks);
-    setMsg({ text: `Se ha retirado la vinculación para @${studentUsername}.`, type: "success" });
     setTimeout(() => setMsg(null), 4000);
   };
 
@@ -964,7 +958,7 @@ export default function AdminPage() {
                       </button>
                     </div>
 
-                    {/* Previsualizaciones del Enlace o PDF adjunto en el panel de administración */}
+                    {/* Previsualizaciones */}
                     {(n.linkUrl || n.fileData) && (
                       <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200/60">
                         {n.linkUrl && (
