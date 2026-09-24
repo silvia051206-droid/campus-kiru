@@ -50,7 +50,7 @@ interface PaymentRecord {
   payLink: string;
 }
 
-const DEFAULT_CHILDREN: Child[] = [
+const FALLBACK_CHILDREN: Child[] = [
   {
     name: "Carmen",
     username: "carmen",
@@ -70,8 +70,8 @@ export default function PadrePage() {
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
   const [activeTab, setActiveTab] = useState<"inicio" | "progreso" | "documentos" | "pagos">("inicio");
 
-  // Lista dinámica de hijos que detecta nuevos alumnos creados
-  const [childrenList, setChildrenList] = useState<Child[]>(DEFAULT_CHILDREN);
+  // Lista de hijos dinámica cargada desde las cuentas de alumnos creadas
+  const [childrenList, setChildrenList] = useState<Child[]>(FALLBACK_CHILDREN);
 
   // Estado de aceptaciones de documentos firmados
   const [acceptedLog, setAcceptedLog] = useState<Record<string, { user: string; date: string }>>({});
@@ -91,7 +91,7 @@ export default function PadrePage() {
   });
 
   useEffect(() => {
-    // 1. Cargar alumnos dinámicos registrados
+    // 1. Cargar dinámicamente TODOS los alumnos registrados en el sistema (tanto antiguos como nuevos)
     const rawUsers = localStorage.getItem("kiru_custom_users");
     if (rawUsers) {
       try {
@@ -99,7 +99,7 @@ export default function PadrePage() {
         const students = parsed.filter((u: any) => u.role === "alumno");
         if (students.length > 0) {
           const mapped = students.map((s: any) => ({
-            name: s.name.split(" ")[0],
+            name: s.name.split(" ")[0], // Extrae el primer nombre
             username: s.username,
             avatarUrl: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80",
             level: "Explorador (1)"
@@ -223,7 +223,7 @@ export default function PadrePage() {
     });
     const updated = {
       ...acceptedLog,
-      [docId]: { user: "Familia Fernández", date: timestamp }
+      [docId]: { user: "Familia", date: timestamp }
     };
     setAcceptedLog(updated);
     localStorage.setItem("kiru_accepted_docs_log", JSON.stringify(updated));
