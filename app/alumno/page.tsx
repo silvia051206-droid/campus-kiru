@@ -44,12 +44,12 @@ const INITIAL_CARDS: Flashcard[] = [
   { id: "6", category: "Inglés", term: "Achievement", definition: "Logro o éxito conseguido con esfuerzo y habilidad." }
 ];
 
-// RECURSOS EXACTOS SUBRAYADOS EN VERDE EN EL SPRINT 2
+// RECURSOS OFICIALES 1.1 ASIGNATURAS SPRINT 2
 const SUBJECTS = [
   {
     id: "geo",
-    name: "Geografía",
-    desc: "Práctica de mapas interactivos y relieve del mundo.",
+    name: "1.1.1. Geografía",
+    desc: "Práctica de mapas interactivos, relieve y capitales del mundo.",
     links: [
       { title: "GeoGuessr", url: "https://www.geoguessr.com", note: "Explora y deduce ubicaciones reales mediante mapas interactivos." },
       { title: "Seterra", url: "https://www.geoguessr.com/seterra/es", note: "Mapas interactivos para aprender capitales, provincias, ríos y relieve con aciertos." }
@@ -58,7 +58,7 @@ const SUBJECTS = [
   },
   {
     id: "his",
-    name: "Historia",
+    name: "1.1.2. Historia",
     desc: "Vídeos resumen cronológicos y conceptos clave.",
     links: [
       { title: "Canal Memorias de Pez (Vídeos resumen)", url: "https://youtube.com/@memoriasdepez?si=txpcTpw_C-eKfYj0", note: "Vídeos explicativos animados sobre etapas históricas clave." }
@@ -67,7 +67,7 @@ const SUBJECTS = [
   },
   {
     id: "fis",
-    name: "Física y Química",
+    name: "1.1.3. Física y Química",
     desc: "Resolución práctica de problemas, fórmulas y ajustes.",
     links: [
       { title: "Clases Particulares en Ávila", url: "https://youtube.com/@clasesparticularesenavila?si=lXZ73ecH2PbmC1nO", note: "Ejercicios guiados paso a paso de cinemática y reacciones químicas para ESO." }
@@ -76,7 +76,7 @@ const SUBJECTS = [
   },
   {
     id: "len",
-    name: "Lengua y Literatura",
+    name: "1.1.4. Lengua y Literatura",
     desc: "Sintaxis, morfología y comprensión lectora.",
     links: [
       { title: "Sintaxis Guiada Paso a Paso", url: "https://www.sintaxis.org/", note: "Fichas de identificación de sintagmas y complementos oracionales." }
@@ -85,14 +85,14 @@ const SUBJECTS = [
   },
   {
     id: "ing",
-    name: "Inglés",
+    name: "1.1.5. Inglés",
     desc: "Vocabulario, gramática y preparación curricular Macmillan.",
     links: [],
     defaultNote: "Revisa las flashcards de vocabulario y realiza el test A1."
   },
   {
     id: "qui",
-    name: "Química",
+    name: "1.1.6. Química",
     desc: "Tabla periódica, formulación inorgánica y enlaces.",
     links: [
       { title: "Tabla Periódica Interactiva (Ptable)", url: "https://ptable.com/?lang=es", note: "Propiedades y valencias de los elementos químicos." }
@@ -101,7 +101,7 @@ const SUBJECTS = [
   },
   {
     id: "bio",
-    name: "Biología y Geología",
+    name: "1.1.7. Biología y Geología",
     desc: "Célula, genética, ecosistemas y anatomía humana.",
     links: [
       { title: "Atlas Visual de Biología", url: "https://biologia-geologia.com/", note: "Esquemas interactivos del ciclo celular y anatomía." }
@@ -346,7 +346,7 @@ export default function AlumnoPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-wrap gap-1.5 shadow-xs text-xs font-semibold">
           {[
             { id: "inicio", label: "Mi Panel" },
-            { id: "asignaturas", label: "Asignaturas" },
+            { id: "asignaturas", label: "1.1. Asignaturas" },
             { id: "flashcards", label: "Flashcards" },
             { id: "ingles", label: "Inglés A1" },
             { id: "progreso", label: "Mi Progreso (SC)" },
@@ -373,7 +373,7 @@ export default function AlumnoPage() {
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bienvenida</span>
               <h2 className="text-2xl font-serif text-slate-900 font-bold">¡Hola, {currentStudentName}!</h2>
               <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-                Tienes disponibles tus recursos didácticos: vídeos y mapas interactivos en <strong>Asignaturas</strong>, el sistema de <strong>Flashcards</strong>, el módulo de <strong>Inglés A1</strong> y tus <strong>SkillCoins semanales</strong>.
+                Tienes disponibles tus recursos didácticos: vídeos y mapas interactivos en <strong>1.1. Asignaturas</strong>, el sistema de <strong>Flashcards</strong>, el módulo de <strong>Inglés A1</strong> y tus <strong>SkillCoins semanales</strong>.
               </p>
             </div>
 
@@ -383,7 +383,7 @@ export default function AlumnoPage() {
                 className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-slate-400 transition cursor-pointer shadow-xs space-y-2"
               >
                 <BookOpen className="w-5 h-5 text-blue-700" />
-                <h3 className="font-serif text-base text-slate-900 font-bold">Asignaturas</h3>
+                <h3 className="font-serif text-base text-slate-900 font-bold">1.1. Asignaturas</h3>
                 <p className="text-xs text-slate-500">Geografía (mapas), Historia (Memorias de Pez), Física (Ávila) y notas del mentor.</p>
               </div>
 
@@ -408,13 +408,13 @@ export default function AlumnoPage() {
           </div>
         )}
 
-        {/* SECCIÓN 2: ASIGNATURAS */}
+        {/* SECCIÓN 1.1: ASIGNATURAS */}
         {mainTab === "asignaturas" && (
           <div className="space-y-6 animate-in fade-in duration-150">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <h2 className="text-xl sm:text-2xl font-serif text-slate-900 font-bold">Zona de Asignaturas</h2>
-                <p className="text-xs text-slate-500">Recursos recomendados y mensajes directos de tu mentor.</p>
+                <h2 className="text-xl sm:text-2xl font-serif text-slate-900 font-bold">1.1. Asignaturas y Recursos</h2>
+                <p className="text-xs text-slate-500">Listado oficial de materias, herramientas recomendadas y notas del mentor.</p>
               </div>
 
               <select
@@ -433,7 +433,7 @@ export default function AlumnoPage() {
             <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-xs">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                  Asignatura
+                  Materia Activa
                 </span>
                 <h3 className="text-2xl font-serif text-slate-900 font-bold mt-2">{activeSubject.name}</h3>
                 <p className="text-xs text-slate-500 mt-1">{activeSubject.desc}</p>
