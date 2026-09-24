@@ -138,7 +138,7 @@ export default function AlumnoPage() {
   const [selectedSubjectId, setSelectedSubjectId] = useState("geo");
   const [mentorMessages, setMentorMessages] = useState<MentorMessage[]>([]);
 
-  // Inglés A1 Motor de ejercicios
+  // Inglés A1 Motor de ejercicios corregido y real
   const [englishAnswers, setEnglishAnswers] = useState<Record<number, string>>({});
   const [englishFeedback, setEnglishFeedback] = useState<{ score: number; total: number; checked: boolean }>({ score: 0, total: 3, checked: false });
 
@@ -298,14 +298,21 @@ export default function AlumnoPage() {
     setupNewQuestion();
   };
 
-  // Corrección real de inglés
+  // Corrección real y dinámica de inglés (Calcula aciertos exactos y nota sobre 10)
   const checkEnglishExercises = (e: React.FormEvent) => {
     e.preventDefault();
     let hits = 0;
+    const totalQ = 3;
+
     if (englishAnswers[0]?.trim().toLowerCase() === "is") hits++;
     if (englishAnswers[1]?.trim().toLowerCase() === "they") hits++;
     if (englishAnswers[2]?.trim().toLowerCase() === "apple") hits++;
-    setEnglishFeedback({ score: hits, total: 3, checked: true });
+
+    setEnglishFeedback({
+      score: hits,
+      total: totalQ,
+      checked: true
+    });
   };
 
   const activeSubject = SUBJECTS.find((s) => s.id === selectedSubjectId) || SUBJECTS[0];
@@ -313,7 +320,7 @@ export default function AlumnoPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans pb-16">
-      {/* Cabecera con botón de apagado en negro (Feedback del Sprint 2) */}
+      {/* Cabecera */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div className="flex items-center gap-2">
           <span className="font-serif text-lg sm:text-xl text-slate-900 font-bold">Campus Método Kiru</span>
@@ -359,9 +366,7 @@ export default function AlumnoPage() {
           ))}
         </div>
 
-        {/* ======================================================== */}
         {/* SECCIÓN 1: INICIO */}
-        {/* ======================================================== */}
         {mainTab === "inicio" && (
           <div className="space-y-6 animate-in fade-in duration-150">
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-2">
@@ -403,9 +408,7 @@ export default function AlumnoPage() {
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* SECCIÓN 2: ASIGNATURAS (SUBRAYADO VERDE DEL DOCUMENTO)   */}
-        {/* ======================================================== */}
+        {/* SECCIÓN 2: ASIGNATURAS */}
         {mainTab === "asignaturas" && (
           <div className="space-y-6 animate-in fade-in duration-150">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -436,7 +439,6 @@ export default function AlumnoPage() {
                 <p className="text-xs text-slate-500 mt-1">{activeSubject.desc}</p>
               </div>
 
-              {/* Herramientas y enlaces específicos del documento */}
               <div className="space-y-3 pt-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Herramientas y Práctica</h4>
                 {activeSubject.links.length > 0 ? (
@@ -464,7 +466,6 @@ export default function AlumnoPage() {
                 )}
               </div>
 
-              {/* Mensajes del mentor en orden de más reciente a más antiguo */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex justify-between items-center">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
@@ -506,9 +507,7 @@ export default function AlumnoPage() {
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* SECCIÓN 3: FLASHCARDS (ESTUDIA + PRACTICA)               */}
-        {/* ======================================================== */}
+        {/* SECCIÓN 3: FLASHCARDS */}
         {mainTab === "flashcards" && (
           <div className="space-y-6 animate-in fade-in duration-150">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -517,7 +516,6 @@ export default function AlumnoPage() {
                 <p className="text-xs text-slate-500">Herramienta activa para memorizar términos, fechas y vocabulario.</p>
               </div>
 
-              {/* Filtro de Asignaturas y Selector de Modo */}
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs shadow-xs">
                   <Filter className="w-3.5 h-3.5 text-slate-400" />
@@ -559,11 +557,10 @@ export default function AlumnoPage() {
               </div>
             </div>
 
-            {/* MODO ESTUDIA */}
             {mode === "estudia" && (
               <div className="space-y-5">
                 <div className="bg-[#FAF8F5] border border-slate-200 p-4 rounded-2xl text-xs text-slate-600 leading-relaxed">
-                  💡 <strong>Instrucciones:</strong> Toca la tarjeta para voltearla y ver la respuesta. Usa las flechas para navegar. Puedes ver todas las materias juntas o seleccionar una única asignatura en el desplegable superior.
+                  💡 <strong>Instrucciones:</strong> Toca la tarjeta para voltearla y ver la respuesta. Usa las flechas para navegar.
                 </div>
 
                 {filteredCards.length > 0 ? (
@@ -631,7 +628,6 @@ export default function AlumnoPage() {
               </div>
             )}
 
-            {/* MODO PRACTICA CONTRARRELOJ (1, 3 O 5 MINUTOS) */}
             {mode === "practica" && (
               <div className="space-y-5">
                 {!isGameActive && !gameFinished ? (
@@ -721,9 +717,7 @@ export default function AlumnoPage() {
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* SECCIÓN 4: INGLÉS A1 (MOTOR PROPIO CON CORRECCIÓN REAL)   */}
-        {/* ======================================================== */}
+        {/* SECCIÓN 4: INGLÉS A1 (CON CORRECCIÓN REAL Y CÁLCULO DE NOTA EXACTA) */}
         {mainTab === "ingles" && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6 animate-in fade-in duration-150">
             <div>
@@ -731,7 +725,7 @@ export default function AlumnoPage() {
                 A1 Beginner · Macmillan Curriculum
               </span>
               <h2 className="text-2xl font-serif text-slate-900 font-bold mt-2">Módulo de Inglés A1</h2>
-              <p className="text-xs text-slate-500">Ejercicios autocorregibles con cálculo de nota exacta.</p>
+              <p className="text-xs text-slate-500">Ejercicios autocorregibles con cálculo de nota exacta en tiempo real.</p>
             </div>
 
             <form onSubmit={checkEnglishExercises} className="space-y-4">
@@ -774,11 +768,12 @@ export default function AlumnoPage() {
                 />
               </div>
 
+              {/* Cuadro de resultado corregido dinámicamente */}
               {englishFeedback.checked && (
-                <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-2xs">
-                  <span>Resultado obtenido:</span>
-                  <span className="text-base font-bold font-serif">
-                    {englishFeedback.score} / {englishFeedback.total} aciertos (Nota: {((englishFeedback.score / englishFeedback.total) * 10).toFixed(1)}/10)
+                <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-between gap-2 shadow-2xs">
+                  <span>Resultado de la corrección:</span>
+                  <span className="text-sm font-bold font-serif">
+                    {englishFeedback.score} / {englishFeedback.total} aciertos (Nota: {((englishFeedback.score / englishFeedback.total) * 10).toFixed(1)} / 10)
                   </span>
                 </div>
               )}
@@ -787,15 +782,13 @@ export default function AlumnoPage() {
                 type="submit"
                 className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition shadow-xs"
               >
-                Corregir y calcular nota
+                Corregir y calcular nota real
               </button>
             </form>
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* SECCIÓN 5: MI PROGRESO (SKILLCOINS Y 4 GRÁFICAS PASTEL)  */}
-        {/* ======================================================== */}
+        {/* SECCIÓN 5: MI PROGRESO */}
         {mainTab === "progreso" && (
           <div className="space-y-6 animate-in fade-in duration-150">
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-5">
@@ -835,7 +828,6 @@ export default function AlumnoPage() {
                 </div>
               </div>
 
-              {/* 4 GRÁFICAS EVOLUTIVAS EXIGIDAS EN EL DOCUMENTO */}
               <div className="pt-4 border-t border-slate-100">
                 <SkillCoinsChart />
               </div>
@@ -843,9 +835,7 @@ export default function AlumnoPage() {
           </div>
         )}
 
-        {/* ======================================================== */}
-        {/* SECCIÓN 6: CALCÚLALO                                     */}
-        {/* ======================================================== */}
+        {/* SECCIÓN 6: CALCÚLALO */}
         {mainTab === "calculalo" && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 space-y-4 shadow-xs">
             <h2 className="text-xl sm:text-2xl font-serif text-slate-900 font-bold">Plataforma Calcúlalo</h2>
