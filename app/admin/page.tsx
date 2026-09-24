@@ -141,7 +141,7 @@ export default function AdminPage() {
       }
     }
 
-    // Cargar enlaces mentor
+    // Cargar enlaces mentor de forma estricta individual
     const savedLinks = localStorage.getItem("kiru_mentor_links");
     if (savedLinks) {
       try {
@@ -345,7 +345,7 @@ export default function AdminPage() {
     setTimeout(() => setMsg(null), 4000);
   };
 
-  // Mentor <-> Alumno
+  // Mentor <-> Alumno (CORREGIDO PARA EVITAR QUE UN ALUMNO TENGA MÚLTIPLES MENTORES)
   const handleAssignMentor = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !selectedMentor) {
@@ -353,12 +353,13 @@ export default function AdminPage() {
       return;
     }
 
+    // Eliminamos cualquier asignación previa de este alumno específico para que solo tenga UN mentor exclusivo
     const filtered = links.filter(l => l.studentUsername !== selectedStudent);
     const updatedLinks = [...filtered, { studentUsername: selectedStudent, mentorUsername: selectedMentor }];
     saveLinksToStorage(updatedLinks);
 
     setMsg({ 
-      text: `Vinculación guardada: @${selectedStudent} asignado/a a @${selectedMentor}.`, 
+      text: `Vinculación exclusiva guardada: @${selectedStudent} asignado/a únicamente a @${selectedMentor}.`, 
       type: "success" 
     });
     setTimeout(() => setMsg(null), 4000);
