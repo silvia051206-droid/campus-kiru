@@ -120,7 +120,7 @@ export default function AdminPage() {
   const [requiresSign, setRequiresSign] = useState(false);
   const [uploadedPdf, setUploadedPdf] = useState<{ name: string; base64: string } | null>(null);
 
-  // Pagos
+  // Pagos (con edición completa y actualización de historial/enlaces)
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [payStudent, setPayStudent] = useState("");
   const [payConcept, setPayConcept] = useState("Mentoría mensual");
@@ -128,6 +128,7 @@ export default function AdminPage() {
   const [payDueDate, setPayDueDate] = useState("15/09/2026");
   const [payStatus, setPayStatus] = useState<"Pagado" | "Pendiente">("Pendiente");
   const [payLink, setPayLink] = useState("https://bizum.es");
+  const [editingPayment, setEditingPayment] = useState<PaymentRecord | null>(null);
 
   useEffect(() => {
     // Cargar usuarios
@@ -277,7 +278,7 @@ export default function AdminPage() {
       password: password.trim(),
       role,
       createdAt: new Date().toISOString().split("T")[0],
-      assignedParent: role === "alumno" ? "familia" : undefined, // Vincula automáticamente el alumno nuevo a la familia
+      assignedParent: role === "alumno" ? "familia" : undefined,
     };
 
     const updated = [newUser, ...users];
@@ -468,6 +469,25 @@ export default function AdminPage() {
     setPayments(updated);
     localStorage.setItem("kiru_admin_payments", JSON.stringify(updated));
     setMsg({ text: `Pago registrado correctamente para @${target}.`, type: "success" });
+    setTimeout(() => setMsg(null), 3000);
+  };
+
+  const handleUpdatePayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPayment) return;
+    const updated = payments.map(p => p.id === editingPayment.id ? editingPayment : p);
+    setPayments(updated);
+    localStorage.setItem("kiru_admin_payments", JSON.stringify(updated));
+    setEditingPayment(null);
+    setMsg({ text: "Historial de pagos actualizado con éxito.", type: "success" });
+    setTimeout(() => setMsg(null), 3000);
+  };
+
+  const handleDeletePayment = (id: string) => {
+    const updated = payments.filter(p => p.id !== id);
+    setPayments(updated);
+    localStorage.setItem("kiru_admin_payments", JSON.stringify(updated));
+    setMsg({ text: "Entrada eliminada del historial de pagos.", type: "success" });
     setTimeout(() => setMsg(null), 3000);
   };
 
@@ -800,13 +820,13 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* SECCIÓN 3: GESTIÓN DE PAGOS */}
+        {/* SECCIÓN 3: GESTIÓN DE PAGOS AVANZADA (CON EDICIÓN, ENLACES Y BORRADO) */}
         {activeTab === "pagos" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-1 h-fit">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-slate-700" />
-                <h2 className="font-serif text-base text-slate-900">Configurar Próximo Pago</h2>
+                <h2 className="font-serif text-base text-slate-900">Crear o Programar Pago</h2>
               </div>
 
               <form onSubmit={handleCreatePayment} className="space-y-3 text-xs">
@@ -819,7 +839,7 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Concepto</label>
-                  <input type="text" value={payConcept} onChange={(e) => setPayConcept(e.target.value)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+                  <input type="text" value={payConcept} onChange={(e) => setPayConcept(e.target.value)} placeholder="Ej: Mentoría septiembre" className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
                 </div>
 
                 <div>
@@ -828,7 +848,7 @@ export default function AdminPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Fecha Límite</label>
+                  <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Fecha de vencimiento</label>
                   <input type="text" value={payDueDate} onChange={(e) => setPayDueDate(e.target.value)} placeholder="15/09/2026" className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
                 </div>
 
@@ -842,11 +862,11 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Enlace de Pago</label>
-                  <input type="text" value={payLink} onChange={(e) => setPayLink(e.target.value)} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+                  <input type="text" value={payLink} onChange={(e) => setPayLink(e.target.value)} placeholder="https://..." className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
                 </div>
 
                 <button type="submit" className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition">
-                  Registrar / Actualizar Pago
+                  Crear y Publicar Pago
                 </button>
               </form>
             </div>
@@ -855,31 +875,37 @@ export default function AdminPage() {
               <h2 className="font-serif text-base text-slate-900">Historial y Control de Pagos ({payments.length})</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-[#FAF8F5] border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                  <thead className="bg-[#FAF8F5] border-b border-slate-200 text-slate-500 uppercase font-semibold text-[10px]">
                     <tr>
+                      <th className="p-3">Fecha</th>
                       <th className="p-3">Alumno</th>
                       <th className="p-3">Concepto</th>
                       <th className="p-3">Importe</th>
-                      <th className="p-3">Fecha</th>
                       <th className="p-3">Estado</th>
-                      <th className="p-3 text-right">Acción</th>
+                      <th className="p-3 text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {payments.map((p) => (
                       <tr key={p.id}>
+                        <td className="p-3 text-slate-500">{p.dueDate}</td>
                         <td className="p-3 font-semibold">@{p.studentUsername}</td>
                         <td className="p-3">{p.concept}</td>
                         <td className="p-3 font-bold">{p.amount} €</td>
-                        <td className="p-3 text-slate-500">{p.dueDate}</td>
                         <td className="p-3">
                           <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${p.status === "Pagado" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
                             {p.status}
                           </span>
                         </td>
-                        <td className="p-3 text-right">
-                          <button onClick={() => togglePaymentStatus(p.id)} className="text-[11px] underline text-slate-600 hover:text-slate-900">
-                            Cambiar Estado
+                        <td className="p-3 text-right space-x-2">
+                          <button onClick={() => togglePaymentStatus(p.id)} className="underline text-slate-600 hover:text-slate-900 font-medium">
+                            Estado
+                          </button>
+                          <button onClick={() => setEditingPayment(p)} className="underline text-blue-600 hover:text-blue-800 font-medium">
+                            Editar
+                          </button>
+                          <button onClick={() => handleDeletePayment(p.id)} className="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg inline-block align-middle" title="Eliminar entrada">
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </td>
                       </tr>
@@ -1024,6 +1050,53 @@ export default function AdminPage() {
                 </button>
                 <button type="submit" className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-sm">
                   <Save className="w-3.5 h-3.5" /> Guardar cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Pago */}
+      {editingPayment && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-serif text-lg text-slate-900 font-bold">Editar / Actualizar Pago</h3>
+              <button onClick={() => setEditingPayment(null)} className="text-slate-400 hover:text-slate-700"><X className="w-4 h-4" /></button>
+            </div>
+
+            <form onSubmit={handleUpdatePayment} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Concepto</label>
+                <input type="text" value={editingPayment.concept} onChange={(e) => setEditingPayment({ ...editingPayment, concept: e.target.value })} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Importe (€)</label>
+                <input type="number" value={editingPayment.amount} onChange={(e) => setEditingPayment({ ...editingPayment, amount: Number(e.target.value) })} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Fecha</label>
+                <input type="text" value={editingPayment.dueDate} onChange={(e) => setEditingPayment({ ...editingPayment, dueDate: e.target.value })} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Enlace de Pago (Actualizable)</label>
+                <input type="text" value={editingPayment.payLink} onChange={(e) => setEditingPayment({ ...editingPayment, payLink: e.target.value })} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl" required />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-500 uppercase tracking-wider mb-1">Estado</label>
+                <select value={editingPayment.status} onChange={(e) => setEditingPayment({ ...editingPayment, status: e.target.value as any })} className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl">
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Pagado">Pagado</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setEditingPayment(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition">
+                  Cancelar
+                </button>
+                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition">
+                  Guardar cambios
                 </button>
               </div>
             </form>
