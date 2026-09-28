@@ -10,13 +10,14 @@ import {
   ArrowRight, 
   X, 
   MessageCircle, 
-  Users, 
-  MapPin, 
   Sparkles, 
   CheckCircle2, 
   BookOpen, 
-  Compass, 
-  GraduationCap 
+  Layers, 
+  Award,
+  MapPin,
+  HelpCircle,
+  Users
 } from "lucide-react";
 
 interface UserAccount {
@@ -45,7 +46,6 @@ export default function HomePage() {
   const [recoveredPass, setRecoveredPass] = useState<string | null>(null);
   const [recoverError, setRecoverError] = useState("");
 
-  // Teléfono oficial y texto exacto exigido en el Sprint 2
   const officialPhone = "34651382833";
   const whatsappMessage = encodeURIComponent("Hola, me gustaría más información sobre Método Kiru");
   const whatsappUrl = `https://wa.me/${officialPhone}?text=${whatsappMessage}`;
@@ -106,292 +106,180 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-slate-800 font-sans flex flex-col justify-between selection:bg-slate-200">
+    <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans flex flex-col justify-between selection:bg-slate-200 text-xs sm:text-sm">
       
-      {/* 1. Barra Superior Unificada */}
-      <header className="bg-white/90 backdrop-blur-sm border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      {/* Barra superior con navegación arriba (Inicio, Programas, Tarifas, Nuestro equipo, FAQ) y WhatsApp */}
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold text-sm shadow-sm">
+          <div className="w-7 h-7 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold text-xs shadow-xs">
             K
           </div>
-          <div>
-            <span className="font-serif text-lg text-slate-900 font-bold block leading-none">Método Kiru</span>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Acompañamiento a Domicilio</span>
-          </div>
+          <span className="font-serif text-base text-slate-900 font-bold">Método Kiru</span>
         </div>
 
-        {/* Enlaces superiores */}
-        <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
-          <a href="#metodologia" className="hover:text-slate-900 transition">Metodología</a>
+        <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-600">
+          <a href="#" className="hover:text-slate-900 transition">Inicio</a>
+          <a href="#programas" className="hover:text-slate-900 transition">Programas</a>
           <a href="#tarifas" className="hover:text-slate-900 transition">Tarifas</a>
-          <Link href="/equipo" className="hover:text-slate-900 transition">Conoce al equipo</Link>
+          <a href="#equipo" className="hover:text-slate-900 transition">Nuestro equipo</a>
+          <a href="#faq" className="hover:text-slate-900 transition">FAQ</a>
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/equipo"
-            className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 shadow-sm"
-          >
-            <Users className="w-3.5 h-3.5 text-slate-500" />
-            <span>Equipo</span>
-          </Link>
-
-          {/* Botón WhatsApp Oficial 651382833 */}
+        <div className="flex items-center gap-2">
+          {/* Enlace directo a WhatsApp en lugar de reservar llamada */}
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition shadow-sm"
+            className="flex items-center gap-1 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition shadow-xs"
           >
             <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
-            <span>Contacto</span>
+            <span>WhatsApp</span>
           </a>
 
-          {/* Botón Plataforma Kiru destacado en Gris Claro como pide el documento */}
           <a
             href="#campus"
-            className="px-4 py-2 rounded-xl bg-slate-200 text-slate-800 text-xs font-bold hover:bg-slate-300 transition shadow-sm"
+            className="px-3.5 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition shadow-xs"
           >
-            Plataforma Kiru
+            Acceso Campus
           </a>
         </div>
       </header>
 
-      {/* 2. Portada (Hero Section) con SEO Local */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-16 text-center space-y-5">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-          <span>Mentoría Pedagógica y Técnicas de Estudio a Domicilio</span>
-        </div>
-
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-serif text-slate-900 max-w-3xl mx-auto leading-tight font-bold">
-          Autonomía, hábitos y excelencia escolar.
-        </h1>
-
-        <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          Acompañamiento individualizado en el hogar para estudiantes de Primaria, ESO y Bachillerato. Desarrollamos autogestión, estructura de trabajo y seguimiento continuado con las familias.
-        </p>
-
-        {/* Zonas Presenciales */}
-        <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-700">
-          <span className="flex items-center gap-1 font-bold text-slate-500 uppercase tracking-wider text-[11px] mr-1">
-            <MapPin className="w-3.5 h-3.5 text-emerald-800" /> Zonas:
-          </span>
-          {["Pozuelo de Alarcón", "Aravaca", "Valdemarín", "Chamberí", "Madrid Noroeste"].map((zona) => (
-            <span key={zona} className="px-3 py-1 bg-white border border-slate-200 rounded-xl shadow-xs">
-              {zona}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. Metodología */}
-      <section id="metodologia" className="max-w-6xl mx-auto px-4 sm:px-6 py-12 border-t border-slate-200/60">
-        <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-serif text-slate-900 font-bold">¿Cómo trabajamos?</h2>
-          <p className="text-xs sm:text-sm text-slate-500">Un enfoque integral que va más allá de las clases particulares convencionales.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold">
-              <Compass className="w-5 h-5" />
-            </div>
-            <h3 className="font-serif text-lg text-slate-900 font-bold">1. Autonomía & Planificación</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Enseñamos al alumno a estructurar su semana, gestionar los tiempos de estudio y prepararse con antelación a las evaluaciones.
-            </p>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+        
+        {/* HERO SECTION CON TEXTOS DEFINITIVOS */}
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-4 text-center">
+          <h1 className="text-2xl sm:text-3xl font-serif text-slate-900 font-bold max-w-2xl mx-auto leading-snug">
+            Mucho más que clases particulares: <br />Un método para desarrollar las funciones ejecutivas[cite: 2].
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
+            Centrado en conducta, neurodivergencia y desarrollo de habilidades. Individual, a domicilio. Metodología Kiru[cite: 2].
+          </p>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 py-1">
+            Apoyo Académico · Organización · Planificación · Autonomía · Gestión emocional[cite: 2]
           </div>
-
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-800 flex items-center justify-center font-bold">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <h3 className="font-serif text-lg text-slate-900 font-bold">2. Técnicas de Estudio</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Active Recall, Flashcards temáticas, resúmenes estratégicos y comprensión lectora adaptada a cada materia.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-            <h3 className="font-serif text-lg text-slate-900 font-bold">3. Coordinación Familiar</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Informes de progreso, seguimiento de SkillCoins y comunicación fluida entre el mentor pedagógico y los padres.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. Tarifas */}
-      <section id="tarifas" className="max-w-6xl mx-auto px-4 sm:px-6 py-12 border-t border-slate-200/60">
-        <div className="text-center max-w-xl mx-auto mb-10 space-y-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Planes Formativos</span>
-          <h2 className="text-2xl sm:text-3xl font-serif text-slate-900 font-bold">Tarifas Transparentes</h2>
-          <p className="text-xs sm:text-sm text-slate-500">Sesiones presenciales a domicilio diseñadas a la medida del alumno.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
-          
-          {/* Plan Foco */}
-          <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-6">
-            <div className="space-y-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Apoyo Específico</span>
-              <h3 className="font-serif text-xl text-slate-900 font-bold">Plan Foco</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">Para resolución de dudas puntuales y preparación de exámenes clave.</p>
-              <div className="pt-2">
-                <span className="text-3xl font-serif font-bold text-slate-900">30€</span>
-                <span className="text-xs text-slate-400"> / hora</span>
-              </div>
-              <ul className="space-y-2 pt-3 text-xs text-slate-600 border-t border-slate-100">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Sesiones presenciales a domicilio
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Refuerzo en materias seleccionadas
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Acceso básico al campus virtual
-                </li>
-              </ul>
-            </div>
-
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
             <a
-              href={`https://wa.me/${officialPhone}?text=${encodeURIComponent("Hola, me interesa información sobre el Plan Foco de Método Kiru")}`}
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 text-xs font-semibold text-center transition"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-emerald-700 text-white rounded-xl text-xs font-semibold hover:bg-emerald-800 transition shadow-xs"
             >
-              Consultar Plan
+              <MessageCircle className="w-4 h-4" />
+              <span>Contactar por WhatsApp</span>[cite: 2]
             </a>
-          </div>
-
-          {/* Plan Hábito & Autonomía */}
-          <div className="bg-white p-6 sm:p-7 rounded-3xl border-2 border-slate-900 shadow-md flex flex-col justify-between space-y-6 relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-              Más Solicitado
-            </div>
-            <div className="space-y-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 font-semibold">Mentoría Integral</span>
-              <h3 className="font-serif text-xl text-slate-900 font-bold">Plan Hábito & Autonomía</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">Acompañamiento continuado (2 o 3 sesiones por semana) para asentar rutinas.</p>
-              <div className="pt-2">
-                <span className="text-3xl font-serif font-bold text-slate-900">27€</span>
-                <span className="text-xs text-slate-400"> / hora</span>
-              </div>
-              <ul className="space-y-2 pt-3 text-xs text-slate-600 border-t border-slate-100">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Todo lo incluido en el Plan Foco
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Técnicas de estudio activas y Flashcards
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Reportes semanales para la familia
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Sistema de motivación SkillCoins
-                </li>
-              </ul>
-            </div>
-
             <a
-              href={`https://wa.me/${officialPhone}?text=${encodeURIComponent("Hola, me interesa información sobre el Plan Hábito & Autonomía de Método Kiru")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold text-center transition shadow-sm"
+              href="#programas"
+              className="px-5 py-2.5 bg-slate-100 text-slate-800 border border-slate-200 rounded-xl text-xs font-semibold hover:bg-slate-200 transition shadow-xs"
             >
-              Solicitar Mentoría
+              Ver Programas[cite: 2]
             </a>
           </div>
-
-          {/* Plan Pedagógico Especial */}
-          <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-6">
-            <div className="space-y-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">TDAH / AACC</span>
-              <h3 className="font-serif text-xl text-slate-900 font-bold">Plan Pedagógico Especial</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">Especializado en dificultades de atención, altas capacidades y motivación.</p>
-              <div className="pt-2">
-                <span className="text-3xl font-serif font-bold text-slate-900">35€</span>
-                <span className="text-xs text-slate-400"> / hora</span>
-              </div>
-              <ul className="space-y-2 pt-3 text-xs text-slate-600 border-t border-slate-100">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Mentoría psicopedagógica personalizada
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Adaptación curricular y de técnicas
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" /> Coordinación directa con tutores del colegio
-                </li>
-              </ul>
-            </div>
-
-            <a
-              href={`https://wa.me/${officialPhone}?text=${encodeURIComponent("Hola, me interesa información sobre el Plan Pedagógico Especial de Método Kiru")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 text-xs font-semibold text-center transition"
-            >
-              Consultar Plan
-            </a>
-          </div>
-
         </div>
-      </section>
 
-      {/* 5. Acceso al Campus Virtual (Plataforma Kiru) */}
-      <section id="campus" className="max-w-6xl mx-auto px-4 sm:px-6 py-12 border-t border-slate-200/60">
-        <div className="max-w-md mx-auto bg-white rounded-3xl p-7 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-          <div className="space-y-1 text-center">
+        {/* PROGRAMAS / CARACTERÍSTICAS */}
+        <div id="programas" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-1.5">
+            <BookOpen className="w-4 h-4 text-blue-700" />
+            <h3 className="font-serif text-sm text-slate-900 font-bold">1.1. Asignaturas</h3>
+            <p className="text-[11px] text-slate-500">Geografía, Historia, Física y recursos didácticos específicos.</p>
+          </div>
+
+          <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-1.5">
+            <Layers className="w-4 h-4 text-emerald-800" />
+            <h3 className="font-serif text-sm text-slate-900 font-bold">Flashcards</h3>
+            <p className="text-[11px] text-slate-500">Práctica contrarreloj y memorización activa por materias.</p>
+          </div>
+
+          <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-1.5">
+            <Award className="w-4 h-4 text-amber-700" />
+            <h3 className="font-serif text-sm text-slate-900 font-bold">SkillCoins</h3>
+            <p className="text-[11px] text-slate-500">Evaluación de hábitos, organización y bienestar semanal.</p>
+          </div>
+        </div>
+
+        {/* LO QUE DICEN LAS FAMILIAS (MÁS PEQUEÑO Y MISMO FONDO) */}
+        <div className="bg-[#FAF8F5] p-5 rounded-2xl border border-slate-200/80 text-center space-y-2 max-w-2xl mx-auto shadow-2xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lo que dicen las familias</span>[cite: 2]
+          <p className="text-xs text-slate-700 italic leading-relaxed">
+            &ldquo;Gracias a Método Kiru, mi hijo ha recuperado la autonomía estudiando y ha aprendido a organizarse de forma independiente.&rdquo;
+          </p>
+          <span className="text-[10px] text-slate-500 font-semibold block">— Familia de Pozuelo</span>
+        </div>
+
+        {/* TARIFAS (CON WELCOME PACK DE 25€) */}
+        <section id="tarifas" className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+          <div className="text-center space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Planes y Precios</span>
+            <h2 className="text-xl font-serif text-slate-900 font-bold">Tarifas Transparentes</h2>
+            <p className="text-xs text-slate-500">Sesiones a domicilio con acompañamiento pedagógico individualizado.</p>
+          </div>
+
+          <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-center justify-between">
+            <span className="font-semibold">📦 Welcome Pack obligatorio (3 libros + material Método Kiru):</span>
+            <span className="font-bold text-emerald-950 font-serif">25€</span>[cite: 2]
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div className="p-4 rounded-2xl border border-slate-200 bg-[#FAF8F5] space-y-2">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">Plan Foco</span>
+              <div className="font-serif text-lg font-bold text-slate-900">30€ <span className="text-xs text-slate-400 font-sans">/ hora</span></div>
+              <p className="text-[11px] text-slate-600">Apoyo académico específico y resolución de dudas puntuales.</p>
+            </div>
+
+            <div className="p-4 rounded-2xl border-2 border-slate-900 bg-white space-y-2 shadow-2xs">
+              <span className="text-[10px] font-bold text-emerald-800 uppercase">Plan Hábito & Autonomía</span>
+              <div className="font-serif text-lg font-bold text-slate-900">27€ <span className="text-xs text-slate-400 font-sans">/ hora</span></div>
+              <p className="text-[11px] text-slate-600">Mentoría integral continuada, hábitos de estudio y reportes.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ACCESO AL CAMPUS VIRTUAL */}
+        <section id="campus" className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-4 max-w-md mx-auto w-full">
+          <div className="text-center space-y-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Área Privada</span>
-            <h2 className="text-2xl font-serif text-slate-900 font-bold">Plataforma Kiru</h2>
-            <p className="text-xs text-slate-500">Inicia sesión como Alumno, Padre, Mentor o Administrador</p>
+            <h2 className="text-xl font-serif text-slate-900 font-bold">Plataforma Kiru</h2>
+            <p className="text-xs text-slate-500">Inicia sesión con tus credenciales</p>
           </div>
 
           {error && (
-            <div className="p-3 text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-xl">
+            <div className="p-2.5 text-xs bg-rose-50 text-rose-700 border border-rose-200 rounded-xl">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-3">
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                Usuario
-              </label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Usuario</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="carmen, familia, mentor o admin"
-                className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800 font-medium"
+                placeholder="ej: carmen, mentor, familia..."
+                className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                Contraseña
-              </label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Contraseña</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full p-3 pr-10 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800 font-medium"
+                  className="w-full p-2.5 pr-8 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition"
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
@@ -404,7 +292,7 @@ export default function HomePage() {
                   setRecoveredPass(null);
                   setRecoverError("");
                 }}
-                className="text-xs text-slate-500 hover:text-slate-900 hover:underline"
+                className="text-[11px] text-slate-500 hover:text-slate-900 hover:underline"
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -412,22 +300,23 @@ export default function HomePage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-2 shadow-sm"
+              className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition flex items-center justify-center gap-1.5 shadow-xs"
             >
-              <span>Entrar a la Plataforma</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>Acceder</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>
-        </div>
-      </section>
+        </section>
 
-      {/* 6. Footer con Posicionamiento Local */}
-      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400 space-y-1">
-        <p className="font-semibold text-slate-600">© 2026 Método Kiru. Acompañamiento escolar y técnicas de estudio a domicilio.</p>
-        <p className="text-[11px]">Pozuelo de Alarcón · Aravaca · Valdemarín · Chamberí · Madrid Noroeste</p>
+      </main>
+
+      {/* PIE DE PÁGINA CON LAS ZONAS Y TEXTO EXACTO */}
+      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400 space-y-1">
+        <p className="font-semibold text-slate-600">©️2025 Método Kiru[cite: 2].</p>
+        <p className="text-[11px]">Pozuelo, Las Rozas, Majadahonda, Aravaca, Boadilla y Centro[cite: 2].</p>
       </footer>
 
-      {/* Modal de Recuperación de Contraseña */}
+      {/* Modal de recuperación */}
       {isRecoverOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 border border-slate-200 max-w-sm w-full space-y-4 shadow-xl">
@@ -441,35 +330,31 @@ export default function HomePage() {
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
-              Escribe tu nombre completo tal como está registrado (ej. Carmen Fernández).
-            </p>
-
-            <form onSubmit={handleRecover} className="space-y-3">
+            <form onSubmit={handleRecover} className="space-y-3 text-xs">
               <input
                 type="text"
                 placeholder="Nombre y Apellidos"
                 value={recoverFullName}
                 onChange={(e) => setRecoverFullName(e.target.value)}
-                className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-slate-800"
+                className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-xl focus:outline-none"
                 required
               />
 
               {recoveredPass && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl font-medium">
+                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl font-medium">
                   {recoveredPass}
                 </div>
               )}
 
               {recoverError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
+                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl">
                   {recoverError}
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition"
+                className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition"
               >
                 Consultar
               </button>
