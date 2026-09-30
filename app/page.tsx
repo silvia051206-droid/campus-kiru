@@ -108,7 +108,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans flex flex-col justify-between selection:bg-slate-200 text-xs sm:text-sm">
       
-      {/* Barra superior con navegación arriba (Inicio, Programas, Tarifas, Nuestro equipo, FAQ) y WhatsApp */}
+      {/* Barra superior con navegación */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold text-xs shadow-xs">
@@ -147,17 +147,32 @@ export default function HomePage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         
-        {/* HERO SECTION CON TÍTULO MEJORADO Y SIN CITAS */}
+        {/* HERO SECTION CON EL NUEVO TÍTULO Y COBERTURA */}
         <div className="bg-white p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-xs space-y-5 text-center">
-          <h1 className="text-3xl sm:text-5xl font-serif text-slate-900 font-normal max-w-2xl mx-auto leading-[1.15] tracking-tight">
-            Mucho más que clases particulares: Un método para desarrollar las funciones ejecutivas.
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
-            Centrado en conducta, neurodivergencia y desarrollo de habilidades. Individual, a domicilio. Metodología Kiru.
-          </p>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 py-1">
-            Apoyo Académico · Organización · Planificación · Autonomía · Gestión emocional
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-medium tracking-wide">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+            <span>Mentoría Pedagógica y Técnicas de Estudio a Domicilio</span>
           </div>
+
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif text-slate-900 font-normal max-w-3xl mx-auto leading-[1.15] tracking-tight">
+            Autonomía, hábitos y excelencia escolar.
+          </h1>
+
+          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Acompañamiento individualizado en el hogar para estudiantes de Primaria, ESO y Bachillerato. Desarrollamos autogestión, estructura de trabajo y seguimiento continuado con las familias.
+          </p>
+
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 py-1 flex items-center justify-center gap-2 flex-wrap">
+            <span className="text-emerald-800">COBERTURA:</span>
+            <span>Pozuelo de Alarcón</span>
+            <span>·</span>
+            <span>Aravaca</span>
+            <span>·</span>
+            <span>Valdemarín</span>
+            <span>·</span>
+            <span>Chamberí</span>
+          </div>
+
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <a
               href={whatsappUrl}
@@ -196,15 +211,6 @@ export default function HomePage() {
             <h3 className="font-serif text-base text-slate-900 font-bold">SkillCoins</h3>
             <p className="text-xs text-slate-500">Evaluación de hábitos, organización y bienestar semanal.</p>
           </div>
-        </div>
-
-        {/* LO QUE DICEN LAS FAMILIAS */}
-        <div className="bg-[#FAF8F5] p-6 rounded-3xl border border-slate-200/80 text-center space-y-2 max-w-2xl mx-auto shadow-2xs">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lo que dicen las familias</span>
-          <p className="text-xs text-slate-700 italic leading-relaxed">
-            &ldquo;Gracias a Método Kiru, mi hijo ha recuperado la autonomía estudiando y ha aprendido a organizarse de forma independiente.&rdquo;
-          </p>
-          <span className="text-[10px] text-slate-500 font-semibold block">— Familia de Pozuelo</span>
         </div>
 
         {/* TARIFAS */}
