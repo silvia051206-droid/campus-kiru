@@ -56,24 +56,20 @@ export default function MentorPage() {
   const [selectedStudent, setSelectedStudent] = useState<string>("carmen");
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
-  // 1. Asignaturas visibles por alumno
   const [studentSubjects, setStudentSubjects] = useState<Record<string, string[]>>({
     carmen: ["geo", "his", "fis", "ing", "len"],
     alvaro: ["his", "len", "ing", "bio"]
   });
 
-  // 2. Enviar mensaje y enlace/archivo por asignatura (Subrayado en verde)
   const [msgSubject, setMsgSubject] = useState("geo");
   const [msgTarget, setMsgTarget] = useState("carmen");
   const [msgText, setMsgText] = useState("");
   const [msgLink, setMsgLink] = useState("");
 
-  // 3. Generador masivo de Flashcards (hasta 30)
   const [bulkCategory, setBulkCategory] = useState("Geografía");
   const [bulkText, setBulkText] = useState("");
   const [bulkTarget, setBulkTarget] = useState("todos");
 
-  // 4. Configuración de Inglés A1
   const [englishConfig, setEnglishConfig] = useState<EnglishConfig>({
     studentUsername: "carmen",
     selectedUnits: ["Unit 1: Introductions & To Be", "Unit 2: Daily Routines & Present Simple"],
@@ -83,7 +79,6 @@ export default function MentorPage() {
   });
   const [previewQuestions, setPreviewQuestions] = useState<EnglishQuestion[]>([]);
 
-  // 5. SkillCoins del alumno seleccionado
   const [studentSC, setStudentSC] = useState({
     estudios: 8,
     compromiso: 9,
@@ -152,7 +147,6 @@ export default function MentorPage() {
     setTimeout(() => setSavedMsg(null), 3000);
   };
 
-  // Enviar mensaje y enlace/archivo por asignatura (Requisito verde Sprint 2)
   const handleSendSubjectMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!msgText.trim()) return;
@@ -184,7 +178,6 @@ export default function MentorPage() {
     setTimeout(() => setSavedMsg(null), 3500);
   };
 
-  // Creación masiva de Flashcards
   const handleCreateBulkFlashcards = (e: React.FormEvent) => {
     e.preventDefault();
     if (!bulkText.trim()) return;
@@ -252,7 +245,6 @@ export default function MentorPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#1E293B] font-sans pb-16">
-      {/* Cabecera del Mentor con botón de apagado en negro */}
       <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-serif font-bold">
@@ -265,7 +257,6 @@ export default function MentorPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Acceso directo a Calcúlalo */}
           <a
             href="https://calculalo.app/"
             target="_blank"
@@ -290,7 +281,6 @@ export default function MentorPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Selector del alumno a gestionar */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-slate-500" />
@@ -321,7 +311,6 @@ export default function MentorPage() {
           </div>
         )}
 
-        {/* Barra de pestañas */}
         <div className="bg-white rounded-2xl border border-slate-200 p-1.5 flex flex-wrap gap-2 w-fit shadow-xs text-xs font-semibold">
           <button
             onClick={() => setActiveTab("asignaturas")}
@@ -370,7 +359,6 @@ export default function MentorPage() {
           </button>
         </div>
 
-        {/* 1. SELECCIÓN DE ASIGNATURAS VISIBLES */}
         {activeTab === "asignaturas" && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
             <div>
@@ -407,7 +395,6 @@ export default function MentorPage() {
           </div>
         )}
 
-        {/* 2. ENVIAR RECURSOS POR ASIGNATURA (SUBRAYADO EN VERDE EN EL SPRINT 2) */}
         {activeTab === "envio_recursos" && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-5 animate-in fade-in duration-150">
             <div>
@@ -418,7 +405,7 @@ export default function MentorPage() {
                 Enviar Recomendaciones y Enlaces por Asignatura
               </h2>
               <p className="text-xs text-slate-500">
-                Escribe una recomendación y adjunta un enlace (vídeos de YouTube, mapas interactivos o guías) para que aparezca en el espacio de la asignatura del alumno.
+                Escribe una recomendación y adjunta un enlace para que aparezca en el espacio de la asignatura del alumno.
               </p>
             </div>
 
@@ -464,7 +451,7 @@ export default function MentorPage() {
                   rows={3}
                   value={msgText}
                   onChange={(e) => setMsgText(e.target.value)}
-                  placeholder="Ej: Mira este vídeo sobre el relieve peninsular antes de nuestra sesión del jueves..."
+                  placeholder="Ej: Mira este vídeo sobre el relieve peninsular..."
                   className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-2xl text-xs text-slate-800 focus:outline-none"
                   required
                 />
@@ -478,7 +465,7 @@ export default function MentorPage() {
                   type="url"
                   value={msgLink}
                   onChange={(e) => setMsgLink(e.target.value)}
-                  placeholder="https://youtube.com/... o https://geoguessr.com/..."
+                  placeholder="https://youtube.com/..."
                   className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none"
                 />
               </div>
@@ -494,13 +481,12 @@ export default function MentorPage() {
           </div>
         )}
 
-        {/* 3. CREACIÓN MASIVA DE FLASHCARDS */}
         {activeTab === "flashcards" && (
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-5">
             <div>
               <h2 className="text-xl font-serif text-slate-900 font-bold">Generador Masivo de Flashcards</h2>
               <p className="text-xs text-slate-500 mt-1">
-                Pega una lista de conceptos y definiciones para generar hasta 30 tarjetas de golpe sin crearlas de una en una.
+                Pega una lista de conceptos y definiciones para generar hasta 30 tarjetas de golpe.
               </p>
             </div>
 
@@ -545,19 +531,16 @@ export default function MentorPage() {
 
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Lista de conceptos (Formato: Concepto: Definición o Concepto - Definición)
+                  Lista de conceptos (Formato: Concepto - Definición)
                 </label>
                 <textarea
                   rows={7}
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
-                  placeholder={`Meseta: Planicie extensa situada a considerable altura.\nDelta: Terreno comprendido entre los brazos de un río en su desembocadura.\n1492: Descubrimiento de América por Cristóbal Colón.\nInercia: Propiedad de los cuerpos de mantener su estado de reposo.`}
+                  placeholder={`Meseta: Planicie extensa...\nDelta: Terreno comprendido...`}
                   className="w-full p-3 bg-[#FAF8F5] border border-slate-200 rounded-2xl text-xs font-mono text-slate-800 leading-relaxed focus:outline-none"
                   required
                 />
-                <span className="text-[11px] text-slate-400 block mt-1">
-                  * Un concepto por cada línea. Puedes pegar hasta 30 líneas a la vez.
-                </span>
               </div>
 
               <button
@@ -570,7 +553,6 @@ export default function MentorPage() {
           </div>
         )}
 
-        {/* 4. MOTOR DE INGLÉS A1 */}
         {activeTab === "ingles" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <form onSubmit={handleSaveEnglishConfig} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
@@ -632,7 +614,7 @@ export default function MentorPage() {
                   onChange={(e) => setEnglishConfig({ ...englishConfig, selectedCategory: e.target.value })}
                   className="w-full p-2.5 bg-[#FAF8F5] border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"
                 >
-                  <option value="Todas">Todas las áreas (Grammar, Vocab, Everyday)</option>
+                  <option value="Todas">Todas las áreas</option>
                   <option value="Grammar">Gramática</option>
                   <option value="Vocabulary">Vocabulario temático</option>
                   <option value="Everyday English">Inglés funcional y cotidiano</option>
@@ -699,21 +681,19 @@ export default function MentorPage() {
                     </div>
 
                     <p className="font-semibold text-slate-800">
-                      {idx + 1}. {q.prompt}
+                      {idx + 1}. {q.question}
                     </p>
 
-                    {q.type === "multiple-choice" && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {q.options?.map((opt, i) => (
-                          <span key={i} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-600">
-                            {opt}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {q.options?.map((opt: string, i: number) => (
+                        <span key={i} className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-600">
+                          {opt}
+                        </span>
+                      ))}
+                    </div>
 
                     <span className="text-[10px] text-slate-400 block pt-1">
-                      Respuesta esperada: <strong className="text-slate-600">{q.correctAnswers.join(" / ")}</strong>
+                      Respuesta esperada: <strong className="text-slate-600">{q.answer}</strong>
                     </span>
                   </div>
                 ))}
@@ -722,7 +702,6 @@ export default function MentorPage() {
           </div>
         )}
 
-        {/* 5. SKILLCOINS MANUALES Y 4 GRÁFICAS EVOLUTIVAS */}
         {activeTab === "skillcoins" && (
           <div className="space-y-6 animate-in fade-in duration-150">
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-4">
@@ -733,7 +712,7 @@ export default function MentorPage() {
                   </h3>
                   <p className="text-xs text-slate-500">Puntúa semanalmente de 0 a 10 cada categoría tras la sesión.</p>
                 </div>
-                <span className="text-[10px] text-slate-400 font-semibold">Actualizado el 12/5/26</span>
+                <span className="text-[10px] text-slate-400 font-semibold">Actualizado</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -746,7 +725,7 @@ export default function MentorPage() {
                         min="0"
                         max="10"
                         value={studentSC[cat]}
-                        onChange={(e) => handleUpdateSC(cat, parseInt(e.target.value) || 0)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleUpdateSC(cat, parseInt(e.target.value) || 0)}
                         className="w-16 p-2 bg-white border border-slate-200 rounded-xl text-center text-sm font-bold text-slate-800"
                       />
                       <span className="text-xs text-slate-400 font-semibold">/ 10 SC</span>
@@ -756,7 +735,6 @@ export default function MentorPage() {
               </div>
             </div>
 
-            {/* 4 Gráficas evolutivas en tonos pastel */}
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-4">
               <SkillCoinsChart />
             </div>
